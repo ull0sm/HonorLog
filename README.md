@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Okinawa Shorin Kai Karate Do - Student Profile Portal
+
+A modern, responsive web portal for inquiring about student profiles, achievements, and tournament history for **Okinawa Shorin Kai Karate Do**. This system provides a streamlined interface for parents, students, and administrators to access performance records.
+
+![Shorin Kai Logo](public/logo.png)
+
+## Features
+
+- **Student Search**: Fast, fuzzy-search enabled directory to find students by name or unique ID (e.g., SK-0001).
+- **Comprehensive Profiles**: Detailed views showcasing belt ranks, dojo affiliation, and participation history.
+- **Tournament Records**: Track medals (Gold, Silver, Bronze) and event participation over time.
+- **Responsive Design**: Optimized for both mobile devices and desktop screens.
+- **Theme Support**: Includes a dark/light mode toggle for comfortable viewing in any environment.
+
+## Tech Stack
+
+- **Framework**: [Next.js](https://nextjs.org/) (React)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Database**: [Supabase](https://supabase.com/)
+- **Search Engine**: [Fuse.js](https://fusejs.io/)
+
+## Open Source
+
+This is an open source project. We welcome the community to review the code and suggest improvements.
+
+**Repository**: [https://github.com/ull0sm/animated-garbanzo.git](https://github.com/ull0sm/animated-garbanzo.git)
 
 ## Getting Started
 
-First, run the development server:
+1.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/ull0sm/animated-garbanzo.git
+    cd animated-garbanzo
+    ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+2.  **Install dependencies**:
+    ```bash
+    npm install
+    ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3.  **Environment Setup**:
+    Create a `.env.local` file in the root directory with your Supabase credentials:
+    ```env
+    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+    ```
+    *Note: Database schema is available in `schema.sql`.*
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+4.  **Run Development Server**:
+    ```bash
+    npm run dev
+    ```
+    Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Contact
 
-## Learn More
+For inquiries regarding the project or the karate school, please contact us:
 
-To learn more about Next.js, take a look at the following resources:
+📧 **Email**: [contact@shorinkai.in](mailto:contact@shorinkai.in)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+&copy; 2026 Okinawa Shorin Kai Karate Do. All rights reserved.
