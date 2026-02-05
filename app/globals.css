@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #1c1c1c;
+  
+  /* Brand Colors - Exact matches from Logo */
+  --karate-green: #76c32d;
+  --karate-yellow: #ffd700;
+  --karate-black: #000000;
+  --karate-white: #ffffff;
+  
+  /* UI Colors */
+  --card-bg: #ffffff;
+  --card-border: #f0f0f0;
+  --muted: #6b7280;
+  --input-bg: #ffffff;
+  --input-border: #e5e7eb;
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  
+  /* Brand Colors adjusted for dark mode readability if needed, keeping core identity */
+  --karate-green: #76c32d; 
+  --karate-yellow: #ffd700;
+  
+  /* UI Colors Dark */
+  --card-bg: #171717;
+  --card-border: #262626;
+  --muted: #a3a3a3;
+  --input-bg: #171717;
+  --input-border: #404040;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card-bg: var(--card-bg);
+  --color-card-border: var(--card-border);
+  --color-muted: var(--muted);
+  
+  --color-karate-green: var(--karate-green);
+  --color-karate-yellow: var(--karate-yellow);
+  --color-karate-black: var(--karate-black);
+  --color-karate-white: var(--karate-white);
+  
+  --color-input-bg: var(--input-bg);
+  --color-input-border: var(--input-border);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Minimalist Utilities */
+.clean-shadow {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.hover-shadow {
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.hover-shadow:hover {
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.025);
+  transform: translateY(-1px);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.4s ease-out forwards;
+}
