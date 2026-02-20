@@ -8,15 +8,23 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className="relative w-14 h-7 rounded-full bg-[var(--card-bg)] border border-[var(--card-border)] transition-all hover:border-[var(--karate-green)] focus:outline-none focus:ring-2 focus:ring-[var(--karate-green)] focus:ring-offset-2 focus:ring-offset-[var(--background)]"
+      className="relative flex h-10 w-[92px] items-center rounded-full border border-[var(--card-border)] bg-[var(--surface-alt)] p-1 text-xs font-semibold text-[var(--muted)] transition-all hover:border-[var(--ring)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:ring-offset-2 focus:ring-offset-[var(--background)]"
       aria-label="Toggle theme"
     >
       <span
-        className={`absolute top-0.5 left-0.5 w-6 h-6 rounded-full bg-[var(--karate-green)] flex items-center justify-center text-white text-sm transition-transform duration-300 ${
-          theme === 'dark' ? 'translate-x-7' : 'translate-x-0'
+        className={`absolute left-1 top-1 h-8 w-[calc(50%-4px)] rounded-full bg-[var(--accent)] transition-transform duration-300 ${
+          theme === 'dark' ? 'translate-x-full' : 'translate-x-0'
         }`}
+      />
+      <span
+        className={`relative z-10 flex w-1/2 items-center justify-center gap-1 transition-colors ${theme === 'light' ? 'text-white' : 'text-[var(--muted)]'}`}
       >
-        {theme === 'light' ? '☀️' : '🌙'}
+        ☀️ <span className="hidden sm:inline">Light</span>
+      </span>
+      <span
+        className={`relative z-10 flex w-1/2 items-center justify-center gap-1 transition-colors ${theme === 'dark' ? 'text-white' : 'text-[var(--muted)]'}`}
+      >
+        🌙 <span className="hidden sm:inline">Dark</span>
       </span>
     </button>
   )

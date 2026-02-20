@@ -1,37 +1,39 @@
 @import "tailwindcss";
 
 :root {
-  --background: #c2e8ff;
-  --foreground: #011023;
-  
-  /* Brand Colors - Exact matches from Logo */
+  --background: #f3f9ff;
+  --foreground: #0b1f40;
+  --surface: #ffffff;
+  --surface-alt: #eaf3ff;
+  --muted: #44628c;
+  --card-bg: #ffffff;
+  --card-border: #c4dbf8;
+  --input-bg: #ffffff;
+  --input-border: #b8d0ee;
+  --ring: #7c9fc9;
+  --accent: #527fb0;
+  --accent-soft: #c2e8ff;
   --karate-green: #527fb0;
   --karate-yellow: #7c9fc9;
   --karate-black: #011023;
   --karate-white: #c2e8ff;
-  
-  /* UI Colors */
-  --card-bg: #ffffff;
-  --card-border: #7c9fc9;
-  --muted: #052558;
-  --input-bg: #ffffff;
-  --input-border: #7c9fc9;
 }
 
 .dark {
   --background: #011023;
-  --foreground: #c2e8ff;
-  
-  /* Brand Colors adjusted for dark mode readability if needed, keeping core identity */
-  --karate-green: #7c9fc9; 
-  --karate-yellow: #527fb0;
-  
-  /* UI Colors Dark */
+  --foreground: #d9ecff;
+  --surface: #052558;
+  --surface-alt: #0b316a;
+  --muted: #9db9da;
   --card-bg: #052558;
-  --card-border: #527fb0;
-  --muted: #7c9fc9;
-  --input-bg: #052558;
-  --input-border: #527fb0;
+  --card-border: #2e4f83;
+  --input-bg: #0d3268;
+  --input-border: #3f6297;
+  --ring: #7c9fc9;
+  --accent: #c2e8ff;
+  --accent-soft: #527fb0;
+  --karate-green: #7c9fc9;
+  --karate-yellow: #527fb0;
 }
 
 @theme inline {
@@ -40,6 +42,11 @@
   --color-card-bg: var(--card-bg);
   --color-card-border: var(--card-border);
   --color-muted: var(--muted);
+  --color-surface: var(--surface);
+  --color-surface-alt: var(--surface-alt);
+  --color-ring: var(--ring);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
   
   --color-karate-green: var(--karate-green);
   --color-karate-yellow: var(--karate-yellow);
@@ -57,17 +64,34 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Minimalist Utilities */
+.app-backdrop {
+  background-image:
+    radial-gradient(circle at 10% 0%, rgba(124, 159, 201, 0.16), transparent 34%),
+    radial-gradient(circle at 95% 10%, rgba(82, 127, 176, 0.18), transparent 28%);
+}
+
 .clean-shadow {
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1);
+  box-shadow: 0 14px 34px rgba(5, 37, 88, 0.12), 0 3px 10px rgba(5, 37, 88, 0.06);
+}
+
+.panel {
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+}
+
+.glass {
+  backdrop-filter: blur(10px);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
 }
 
 .hover-shadow {
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
 }
 .hover-shadow:hover {
-  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.025);
-  transform: translateY(-1px);
+  box-shadow: 0 20px 38px rgba(5, 37, 88, 0.14);
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--ring) 78%, white);
 }
 
 /* Animations */
