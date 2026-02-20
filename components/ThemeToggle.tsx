@@ -19,12 +19,12 @@ export default function ThemeToggle() {
       <span
         className={`relative z-10 flex w-1/2 items-center justify-center gap-1 transition-colors ${theme === 'light' ? 'text-white' : 'text-[var(--muted)]'}`}
       >
-        ☀️ <span className="hidden sm:inline">Light</span>
+        <span aria-hidden>☀️</span> <span className="hidden sm:inline">Light</span>
       </span>
       <span
         className={`relative z-10 flex w-1/2 items-center justify-center gap-1 transition-colors ${theme === 'dark' ? 'text-white' : 'text-[var(--muted)]'}`}
       >
-        🌙 <span className="hidden sm:inline">Dark</span>
+        <span aria-hidden>🌙</span> <span className="hidden sm:inline">Dark</span>
       </span>
     </button>
   )

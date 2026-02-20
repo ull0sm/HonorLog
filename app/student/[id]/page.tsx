@@ -151,7 +151,7 @@ export default function StudentProfile() {
                       key={r.id}
                       className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-bold ${medalStyles[r.medal] || medalStyles.PARTICIPATION}`}
                     >
-                      {r.medal !== 'PARTICIPATION' && <span>{r.medal === 'GOLD' ? '🥇' : r.medal === 'SILVER' ? '🥈' : '🥉'}</span>}
+                      {r.medal !== 'PARTICIPATION' && <span aria-hidden>{r.medal === 'GOLD' ? '🥇' : r.medal === 'SILVER' ? '🥈' : '🥉'}</span>}
                       {r.category}
                     </span>
                   ))}
