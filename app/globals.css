@@ -3,93 +3,171 @@
 /* Class-based dark mode for Tailwind v4 utilities */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ─── Design tokens ──────────────────────────────────────────── */
+/* ─── Design tokens (EntryDesk Shadcn Theme) ─────────────────── */
 :root {
-  --bg:                #fafafa;
-  --surface:           #ffffff;
-  --bg-subtle:         #f4f4f5;
-  --border:            #e4e4e7;
-  --border-strong:     #d4d4d8;
-  --text:              #09090b;
-  --text-muted:        #71717a;
-  --text-placeholder:  #a1a1aa;
-  --accent:            #2563eb;
-  --accent-hover:      #1d4ed8;
-  --accent-dim:        rgba(37, 99, 235, 0.12);
-  --surface-hover:     #f4f4f5;
-  --shadow-sm:         0 1px 2px rgba(0,0,0,0.06);
-  --shadow-md:         0 4px 12px rgba(0,0,0,0.08);
+  /* LIGHT: Energetic Olympic HonorLog */
+  --background: #ffffff;
+  --foreground: #011023;
+
+  --card: #C2E8FF;
+  --card-foreground: #011023;
+
+  --popover: #C2E8FF;
+  --popover-foreground: #011023;
+
+  --primary: #052558; 
+  --primary-foreground: #ffffff;
+
+  --secondary: #527FB0;
+  --secondary-foreground: #ffffff;
+
+  --muted: #f1f5f9;
+  --muted-foreground: #052558;
+
+  --accent: #527FB0;
+  --accent-foreground: #011023;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  --border: #011023;
+  --input: #011023;
+  --ring: #052558;
+
+  --radius: 0px; /* Brutalist sharp corners */
 }
 
 .dark {
-  --bg:                #09090b;
-  --surface:           #111113;
-  --bg-subtle:         #1c1c1e;
-  --border:            #27272a;
-  --border-strong:     #3f3f46;
-  --text:              #fafafa;
-  --text-muted:        #a1a1aa;
-  --text-placeholder:  #52525b;
-  --accent:            #3b82f6;
-  --accent-hover:      #60a5fa;
-  --accent-dim:        rgba(59, 130, 246, 0.12);
-  --surface-hover:     #1c1c1e;
-  --shadow-sm:         0 1px 2px rgba(0,0,0,0.3);
-  --shadow-md:         0 4px 12px rgba(0,0,0,0.4);
+  /* DARK: Underground Fight Club / Deep Blueprint */
+  --background: #011023;
+  --foreground: #ffffff;
+
+  --card: #052558;
+  --card-foreground: #ffffff;
+
+  --popover: #052558;
+  --popover-foreground: #ffffff;
+
+  --primary: #C2E8FF;
+  --primary-foreground: #011023;
+
+  --secondary: #527FB0;
+  --secondary-foreground: #ffffff;
+
+  --muted: rgba(82, 127, 176, 0.4);
+  --muted-foreground: #C2E8FF;
+
+  --accent: #527FB0;
+  --accent-foreground: #ffffff;
+
+  --destructive: #7f1d1d;
+  --destructive-foreground: #ffffff;
+
+  --border: #527FB0;
+  --input: #527FB0;
+  --ring: #C2E8FF;
 }
 
 /* ─── Tailwind theme bridge ──────────────────────────────────── */
 @theme inline {
-  --color-bg:              var(--bg);
-  --color-surface:         var(--surface);
-  --color-bg-subtle:       var(--bg-subtle);
-  --color-border:          var(--border);
-  --color-border-strong:   var(--border-strong);
-  --color-text:            var(--text);
-  --color-text-muted:      var(--text-muted);
-  --color-text-placeholder: var(--text-placeholder);
-  --color-accent:          var(--accent);
-  --color-surface-hover:   var(--surface-hover);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius: var(--radius);
+  --radius-sm: var(--radius);
+  --radius-md: var(--radius);
+  --radius-lg: var(--radius);
+  --radius-xl: var(--radius);
+  --radius-2xl: var(--radius);
+  --radius-3xl: var(--radius);
+  --radius-4xl: var(--radius);
 }
 
 /* ─── Base ───────────────────────────────────────────────────── */
 body {
-  background: var(--bg);
-  color: var(--text);
+  background-color: var(--color-background);
+  background-image: none;
+  color: var(--color-foreground);
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+.dark body {
+  background-image: none;
+}
+
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 3px solid var(--color-ring);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 0px;
 }
 
-/* Footer link hover — must live in CSS (layout.tsx is a Server Component) */
-.footer-link {
-  color: var(--text-muted);
-}
-.footer-link:hover {
-  color: var(--text);
-}
+/* ─── Athletic Utilities ───────────────────────────────────────────────────── */
+@layer components {
+  /* Replace glass panels with pure brutalist geometric depth */
+  .athletic-shadow {
+    box-shadow: 4px 4px 0px var(--color-foreground);
+    border: 2px solid var(--color-foreground);
+    border-radius: 0px;
+    background-color: var(--color-card);
+  }
 
-/* Header glass — separates sticky header from scrolled content */
-.header-glass {
-  background: rgba(250, 250, 250, 0.88);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-.dark .header-glass {
-  background: rgba(9, 9, 11, 0.88);
+  .athletic-shadow-sm {
+    box-shadow: 2px 2px 0px var(--color-foreground);
+    border: 2px solid var(--color-foreground);
+    border-radius: 0px;
+  }
+
+  /* Interactive states for athletic elements */
+  .athletic-active:active {
+    box-shadow: 0px 0px 0px var(--color-foreground);
+    transform: translate(4px, 4px);
+  }
+
+  .dark .athletic-shadow {
+    box-shadow: 4px 4px 0px var(--color-primary);
+    border: 2px solid var(--color-primary);
+  }
+  .dark .athletic-shadow-sm {
+    box-shadow: 2px 2px 0px var(--color-primary);
+    border: 2px solid var(--color-primary);
+  }
+  .dark .athletic-active:active {
+    box-shadow: 0px 0px 0px var(--color-primary);
+  }
 }
 
 /* ─── Scrollbar ──────────────────────────────────────────────── */
-::-webkit-scrollbar          { width: 4px; height: 4px; }
+::-webkit-scrollbar          { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track    { background: transparent; }
-::-webkit-scrollbar-thumb    { background: var(--border-strong); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-placeholder); }
+::-webkit-scrollbar-thumb    { background: var(--color-muted-foreground); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-foreground); }
 
 /* ─── Animations ─────────────────────────────────────────────── */
 @keyframes enter-up {
@@ -106,6 +184,6 @@ body {
   to { transform: rotate(360deg); }
 }
 
-.animate-enter    { animation: enter-up   0.22s ease-out both; }
-.animate-fade     { animation: enter-fade 0.18s ease-out both; }
+.animate-enter    { animation: enter-up   0.3s ease-out both; }
+.animate-fade     { animation: enter-fade 0.2s ease-out both; }
 .animate-spin     { animation: spin 0.75s linear infinite; }

@@ -23,8 +23,8 @@ function BeltBadge({ belt }: { belt: string }) {
   }
   return (
     <span
-      className="shrink-0 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
-      style={styles[belt] ?? { background: 'var(--bg-subtle)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}
+      className="shrink-0 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border"
+      style={styles[belt] ?? {}}
     >
       {belt}
     </span>
@@ -71,15 +71,14 @@ export default function Home() {
     <div className="flex flex-col items-center justify-center min-h-[calc(100dvh-3.5rem)] px-4 py-12 sm:py-16">
 
       {/* ── Wordmark ── */}
-      <div className="mb-10 text-center animate-enter space-y-2">
+      <div className="mb-14 text-center animate-enter space-y-1">
         <h1
-          className="text-3xl sm:text-4xl font-bold tracking-tight"
-          style={{ color: 'var(--text)' }}
+          className="text-6xl sm:text-8xl font-black tracking-tighter uppercase text-foreground leading-none"
         >
-          Student Directory
+          HonorLog
         </h1>
-        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-          Okinawa Shorin Kai Karate Do
+        <p className="text-xl sm:text-2xl font-bold uppercase tracking-widest text-primary">
+          Okinawa Shorin Kai
         </p>
       </div>
 
@@ -88,20 +87,15 @@ export default function Home() {
 
         {/* Input wrapper */}
         <div
-          className="relative flex items-center rounded-lg overflow-hidden transition-all duration-150"
-          style={{
-            background: 'var(--surface)',
-            border: open ? '1px solid var(--accent)' : '1px solid var(--border-strong)',
-            boxShadow: open ? `0 0 0 3px var(--accent-dim), var(--shadow-sm)` : 'var(--shadow-sm)',
-          }}
+          className={`relative flex items-center bg-background transition-transform duration-200 ${open ? 'athletic-shadow-sm' : 'border-2 border-foreground'}`}
         >
           {/* Search icon */}
           <svg
-            className="absolute left-3.5 w-4 h-4 pointer-events-none"
-            style={{ color: 'var(--text-placeholder)' }}
+            className="absolute left-4 w-6 h-6 text-foreground pointer-events-none"
             fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            strokeWidth={3}
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+            <path strokeLinecap="round" strokeLinejoin="round"
               d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
 
@@ -112,9 +106,8 @@ export default function Home() {
             onChange={e => setQuery(e.target.value)}
             onFocus={() => setOpen(true)}
             onBlur={() => setTimeout(() => setOpen(false), 120 /* allow click on result to fire before closing */)}
-            placeholder="Search by name or student ID…"
-            className="w-full pl-10 pr-10 py-3 bg-transparent text-sm outline-none"
-            style={{ color: 'var(--text)' }}
+            placeholder="ENTER FIGHTER NAME OR ID"
+            className="w-full pl-12 pr-12 py-4 bg-transparent text-xl sm:text-2xl font-bold uppercase placeholder:text-muted-foreground outline-none text-foreground"
             autoComplete="off"
             autoFocus
           />
@@ -123,8 +116,7 @@ export default function Home() {
           {query && (
             <button
               onMouseDown={e => { e.preventDefault(); clear() }}
-              className="absolute right-3 flex items-center justify-center w-5 h-5 rounded transition-colors"
-              style={{ color: 'var(--text-placeholder)' }}
+              className="absolute right-3 flex items-center justify-center w-5 h-5 rounded transition-colors text-muted-foreground hover:text-foreground"
               aria-label="Clear search"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -137,21 +129,16 @@ export default function Home() {
         {/* ── Results dropdown ── */}
         {isActive && (
           <div
-            className="absolute top-full left-0 right-0 mt-1.5 rounded-lg overflow-hidden z-40 animate-enter"
-            style={{
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              boxShadow: 'var(--shadow-md)',
-            }}
+            className="absolute top-full left-0 right-0 mt-2 athletic-shadow z-40 animate-in fade-in-0 slide-in-from-top-2"
           >
             {loading ? (
-              <div className="py-8 flex items-center justify-center gap-2" style={{ color: 'var(--text-muted)' }}>
-                <span className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
-                <span className="text-sm">Loading…</span>
+              <div className="py-8 flex items-center justify-center gap-3 text-muted-foreground">
+                <span className="w-5 h-5 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                <span className="text-base">Loading…</span>
               </div>
             ) : results.length === 0 ? (
-              <div className="py-10 text-center">
-                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+              <div className="py-10 text-center text-muted-foreground">
+                <p className="text-base">
                   No results for &ldquo;{query}&rdquo;
                 </p>
               </div>
@@ -161,29 +148,23 @@ export default function Home() {
                   <li key={s.id}>
                     <button
                       onMouseDown={() => router.push(`/student/${s.id}`)}
-                      className="w-full px-4 py-2.5 flex items-center justify-between gap-4 text-left transition-colors"
-                      style={{ background: 'transparent' }}
-                      onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-hover)')}
-                      onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.background = 'transparent')}
+                      className="w-full px-5 py-4 flex items-center justify-between gap-4 text-left transition-colors hover:bg-foreground hover:text-background border-b-2 border-foreground last:border-b-0 group"
                     >
                       <div className="min-w-0">
                         <div
-                          className="text-sm font-medium truncate"
-                          style={{ color: 'var(--text)' }}
+                          className="text-xl sm:text-2xl font-black uppercase truncate group-hover:text-background"
                         >
                           {s.full_name}
                         </div>
                         <div
-                          className="text-xs mt-0.5 flex items-center gap-1.5"
-                          style={{ color: 'var(--text-muted)' }}
+                          className="text-sm mt-1 flex items-center gap-2 font-bold uppercase tracking-widest group-hover:text-background/80"
                         >
                           <span
-                            className="font-mono px-1.5 py-px rounded text-xs"
-                            style={{ background: 'var(--bg-subtle)', color: 'var(--text-muted)' }}
+                            className="px-2 py-0.5 border-2 border-current"
                           >
                             {s.student_id}
                           </span>
-                          <span style={{ color: 'var(--text-placeholder)' }}>·</span>
+                          <span>·</span>
                           <span className="truncate">{s.dojo}</span>
                         </div>
                       </div>
@@ -196,18 +177,13 @@ export default function Home() {
 
             {/* Footer row */}
             <div
-              className="px-4 py-2 flex items-center justify-between border-t"
-              style={{
-                borderColor: 'var(--border)',
-                background: 'var(--bg-subtle)',
-              }}
+              className="px-5 py-3 flex items-center justify-between border-t-2 border-foreground bg-muted font-bold uppercase tracking-widest"
             >
-              <span className="text-xs" style={{ color: 'var(--text-placeholder)' }}>
+              <span className="text-xs text-muted-foreground">
                 {results.length > 0 ? `${results.length} result${results.length !== 1 ? 's' : ''}` : ''}
               </span>
               <kbd
-                className="text-xs px-1.5 py-px rounded font-mono"
-                style={{ background: 'var(--border)', color: 'var(--text-muted)', border: '1px solid var(--border-strong)' }}
+                className="text-xs px-1.5 py-px rounded font-mono bg-background border border-border text-muted-foreground shadow-sm"
               >
                 ↵
               </kbd>
@@ -219,8 +195,7 @@ export default function Home() {
       {/* ── Idle hint ── */}
       {!query && (
         <p
-          className="mt-6 text-xs animate-fade"
-          style={{ color: 'var(--text-placeholder)' }}
+          className="mt-6 text-xs text-muted-foreground animate-in fade-in"
         >
           Start typing to search {allStudents.length > 0 ? `${allStudents.length} students` : 'the directory'}
         </p>

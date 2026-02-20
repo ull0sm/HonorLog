@@ -30,23 +30,19 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
-        style={{ background: "var(--bg)", color: "var(--text)" }}
       >
         <ThemeProvider>
           {/* ── Header ── */}
           <header
-            className="sticky top-0 z-50 h-14 flex items-center header-glass"
-            style={{ borderBottom: "1px solid var(--border)" }}
+            className="sticky top-0 z-50 h-14 flex items-center bg-background border-b-2 border-foreground dark:border-primary"
           >
             <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between">
               <Link
                 href="/"
-                className="flex items-center gap-2.5 group min-w-0"
-                style={{ color: "var(--text)" }}
+                className="flex items-center gap-2.5 group min-w-0 text-foreground"
               >
                 <div
-                  className="relative w-7 h-7 rounded-full overflow-hidden shrink-0"
-                  style={{ border: "1px solid var(--border)" }}
+                  className="relative w-7 h-7 rounded-full overflow-hidden shrink-0 border border-border"
                 >
                   <Image src="/logo.png" alt="Shorin Kai logo" fill className="object-cover" />
                 </div>
@@ -62,10 +58,9 @@ export default function RootLayout({
           <main className="flex-1">{children}</main>
 
           {/* ── Footer ── */}
-          <footer style={{ borderTop: "1px solid var(--border)" }}>
+          <footer className="border-t-2 border-foreground dark:border-primary bg-card">
             <div
-              className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-0 sm:h-12 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-0 text-xs"
-              style={{ color: "var(--text-muted)" }}
+              className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-0 sm:h-12 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-0 text-xs text-muted-foreground"
             >
               <span>&copy; {new Date().getFullYear()} Okinawa Shorin Kai Karate Do</span>
               <div className="flex items-center gap-4">

@@ -42,8 +42,8 @@ function BeltBadge({ belt, size = 'sm' }: { belt: string; size?: 'sm' | 'md' }) 
   const pad = size === 'md' ? 'px-3 py-1 text-sm' : 'px-2 py-0.5 text-xs'
   return (
     <span
-      className={`inline-flex items-center rounded font-medium ${pad}`}
-      style={styles[belt] ?? { background: 'var(--bg-subtle)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}
+      className={`inline-flex items-center font-black uppercase tracking-widest border-2 border-foreground ${pad} ${!styles[belt] ? 'bg-muted text-muted-foreground' : ''}`}
+      style={styles[belt] ?? {}}
     >
       {belt} Belt
     </span>
@@ -53,27 +53,26 @@ function BeltBadge({ belt, size = 'sm' }: { belt: string; size?: 'sm' | 'md' }) 
 /* ─── Medal chip ─────────────────────────────────────────────── */
 type MedalKey = 'GOLD' | 'SILVER' | 'BRONZE' | 'PARTICIPATION'
 
-const MEDAL: Record<MedalKey, { icon: string; style: React.CSSProperties }> = {
+const MEDAL: Record<MedalKey, { icon: string; style: React.CSSProperties; className?: string }> = {
   GOLD:          { icon: '🥇', style: { background: '#fef3c7', color: '#92400e', border: '1px solid #fcd34d' } },
   SILVER:        { icon: '🥈', style: { background: '#f4f4f5', color: '#52525b', border: '1px solid #d4d4d8' } },
   BRONZE:        { icon: '🥉', style: { background: '#ffedd5', color: '#9a3412', border: '1px solid #fdba74' } },
-  PARTICIPATION: { icon: '',   style: { background: 'var(--bg-subtle)', color: 'var(--text-muted)', border: '1px solid var(--border)' } },
+  PARTICIPATION: { icon: '',   style: {}, className: 'bg-muted text-muted-foreground border border-border' },
 }
 
 /* ─── Stat card ──────────────────────────────────────────────── */
 function StatCard({ label, value, highlight = false }: { label: string; value: number; highlight?: boolean }) {
   return (
     <div
-      className="rounded-lg p-4 text-center"
-      style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+      className="bg-card athletic-shadow-sm p-4 sm:p-6 text-center border-t-4"
+      style={{ borderTopColor: highlight && value > 0 ? 'var(--color-primary)' : 'var(--color-foreground)' }}
     >
       <div
-        className="text-2xl font-bold tabular-nums"
-        style={{ color: highlight && value > 0 ? '#d97706' : 'var(--text)' }}
+        className={`text-4xl sm:text-5xl font-black tabular-nums ${highlight && value > 0 ? 'text-primary' : 'text-foreground'}`}
       >
         {value}
       </div>
-      <div className="text-xs mt-0.5 font-medium" style={{ color: 'var(--text-muted)' }}>{label}</div>
+      <div className="text-xs sm:text-sm mt-2 font-bold uppercase tracking-widest text-muted-foreground">{label}</div>
     </div>
   )
 }
@@ -83,8 +82,7 @@ function Spinner() {
   return (
     <div className="flex items-center justify-center min-h-[60vh]">
       <span
-        className="w-5 h-5 rounded-full border-2 animate-spin"
-        style={{ borderColor: 'var(--border)', borderTopColor: 'var(--accent)' }}
+        className="w-5 h-5 rounded-full border-2 animate-spin border-muted border-t-primary"
       />
     </div>
   )
@@ -113,12 +111,11 @@ export default function StudentProfile() {
 
   if (!student) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
-        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Profile not found.</p>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <p className="text-base sm:text-lg text-muted-foreground">Profile not found.</p>
         <Link
           href="/"
-          className="text-sm transition-opacity hover:opacity-70"
-          style={{ color: 'var(--accent)' }}
+          className="text-base sm:text-lg transition-colors hover:text-primary/80 font-medium text-primary"
         >
           ← Back to search
         </Link>
@@ -133,51 +130,57 @@ export default function StudentProfile() {
     const initials    = student.full_name.split(' ').filter(Boolean).map(n => n[0]).slice(0, 2).join('').toUpperCase()
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10 space-y-8 animate-enter">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 space-y-10 animate-enter">
 
       {/* ── Back ── */}
       <Link
         href="/"
-        className="inline-flex items-center gap-1 text-sm transition-opacity hover:opacity-70"
-        style={{ color: 'var(--text-muted)' }}
+        className="inline-flex items-center gap-2 px-4 py-2 bg-foreground text-background font-black uppercase tracking-widest text-sm hover:bg-primary hover:text-primary-foreground transition-colors border-2 border-foreground athletic-active"
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
         </svg>
-        Back
+        BACK TO HOMEPAGE
       </Link>
 
       {/* ── Profile header ── */}
-      <div className="flex items-start gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 border-b-4 border-foreground pb-8">
         {/* Avatar initials */}
         <div
-          className="shrink-0 w-14 h-14 rounded-xl flex items-center justify-center text-lg font-bold select-none"
-          style={{ background: 'var(--bg-subtle)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}
+          className="shrink-0 w-20 h-20 sm:w-24 sm:h-24 bg-primary text-primary-foreground border-4 border-foreground athletic-shadow-sm flex items-center justify-center text-3xl sm:text-4xl font-black select-none"
         >
           {initials}
         </div>
 
-        <div className="min-w-0 flex-1 pt-0.5">
-          <div className="flex items-start justify-between gap-3 flex-wrap">
-            <h1 className="text-xl font-bold leading-tight" style={{ color: 'var(--text)' }}>
-              {student.full_name}
-            </h1>
-            <BeltBadge belt={student.belt_rank} size="md" />
-          </div>
-          <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-1.5">
-            <span
-              className="text-xs font-mono px-1.5 py-px rounded"
-              style={{ background: 'var(--bg-subtle)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}
-            >
-              {student.student_id}
-            </span>
-            <span className="text-sm" style={{ color: 'var(--text-muted)' }}>{student.dojo}</span>
+        <div className="min-w-0 flex-1 w-full">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div>
+              <h1 className="text-4xl sm:text-6xl font-black leading-none uppercase tracking-tighter text-foreground">
+                {student.full_name}
+              </h1>
+              <div className="flex items-center flex-wrap gap-x-3 gap-y-2 mt-2">
+                <span
+                  className="text-sm font-bold uppercase tracking-widest px-2 py-1 bg-muted border-2 border-foreground text-foreground"
+                >
+                  ID: {student.student_id}
+                </span>
+                <span className="text-sm sm:text-base font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  {student.dojo}
+                </span>
+              </div>
+            </div>
+            <div className="mt-2 sm:mt-0">
+              <BeltBadge belt={student.belt_rank} size="md" />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* ── Divider ── */}
-      <div style={{ height: '1px', background: 'var(--border)' }} />
+      {/* ── Divider removed, handled by border-b-4 above ── */}
 
       {/* ── Stats ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -189,51 +192,54 @@ export default function StudentProfile() {
 
       {/* ── Competition history ── */}
       {student.participations.length > 0 ? (
-        <section className="space-y-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
-            Competition History
-          </h2>
+        <section className="space-y-6">
+          <div className="flex items-center gap-4">
+            <h2 className="text-2xl font-black uppercase tracking-tighter text-foreground">
+              Fight Record
+            </h2>
+            <div className="h-1 flex-1 bg-foreground opacity-20" />
+          </div>
 
           {student.participations.map(p => {
             const year = new Date(p.events.date).getFullYear()
             return (
               <div
                 key={p.id}
-                className="rounded-lg p-4 transition-colors"
-                style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
-                onMouseEnter={e => ((e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border-strong)')}
-                onMouseLeave={e => ((e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border)')}
+                className="bg-card athletic-shadow-sm p-6 flex flex-col sm:flex-row gap-6 sm:items-center justify-between"
               >
                 {/* Event header */}
-                <div className="flex items-start justify-between gap-4 mb-3">
-                  <div className="min-w-0">
-                    <h3 className="text-sm font-semibold leading-snug" style={{ color: 'var(--text)' }}>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <span
+                      className="shrink-0 text-xs font-black uppercase tracking-widest px-2 py-1 bg-foreground text-background border-2 border-foreground"
+                    >
+                      {year}
+                    </span>
+                    <h3 className="text-xl sm:text-2xl font-black uppercase leading-none text-foreground truncate">
                       {p.events.name}
                     </h3>
-                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                      {p.events.location}
-                    </p>
                   </div>
-                  <span
-                    className="shrink-0 text-xs font-mono px-1.5 py-px rounded"
-                    style={{ background: 'var(--bg-subtle)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}
-                  >
-                    {year}
-                  </span>
+                  <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    {p.events.location}
+                  </p>
                 </div>
 
                 {/* Result chips */}
                 {p.results.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-2 sm:justify-end shrink-0">
                     {p.results.map(r => {
                       const cfg = MEDAL[r.medal as MedalKey] ?? MEDAL.PARTICIPATION
                       return (
                         <span
                           key={r.id}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                          className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-black uppercase tracking-widest border-2 border-foreground ${cfg.className ?? ''}`}
                           style={cfg.style}
                         >
-                          {cfg.icon && <span>{cfg.icon}</span>}
+                          {cfg.icon && <span className="text-base">{cfg.icon}</span>}
                           {r.category}
                         </span>
                       )
@@ -245,7 +251,7 @@ export default function StudentProfile() {
           })}
         </section>
       ) : (
-        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+        <p className="text-sm text-muted-foreground">
           No competitions recorded yet.
         </p>
       )}
