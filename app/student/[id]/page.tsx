@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import Link from 'next/link'
 
@@ -89,13 +89,13 @@ export default function StudentProfile() {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         {/* Back Navigation */}
-        <Link href="/" className="inline-flex items-center text-sm font-medium text-[var(--muted)] hover:text-[var(--karate-green)] transition-colors mb-8">
+        <Link href="/" className="inline-flex items-center text-sm font-medium text-[var(--muted)] hover:text-[var(--karate-green)] transition-colors mb-8 rounded-full border border-[var(--card-border)] px-3 py-1.5 bg-[var(--card-bg)]/70">
            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
            Back to Search
         </Link>
         
         {/* Profile Card */}
-        <div className="bg-[var(--card-bg)] rounded-3xl border border-[var(--card-border)] shadow-xl overflow-hidden mb-8">
+        <div className="bg-[var(--card-bg)] rounded-3xl border border-[var(--card-border)] clean-shadow overflow-hidden mb-8">
           <div className="relative h-32 bg-gradient-to-r from-[var(--karate-green)] to-[var(--karate-yellow)]">
              {/* Abstract Pattern overlay could go here */}
           </div>

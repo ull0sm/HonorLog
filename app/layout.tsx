@@ -33,18 +33,18 @@ export default function RootLayout({
       >
         <ThemeProvider>
           {/* Header */}
-          <header className="sticky top-0 z-50 bg-[var(--karate-green)] text-white shadow-lg">
+          <header className="sticky top-0 z-50 border-b border-[var(--card-border)]/70 bg-[var(--background)]/90 text-[var(--foreground)] backdrop-blur-md">
             <div className="container mx-auto px-4 py-3">
               <div className="flex items-center justify-between">
                 <Link href="/" className="flex items-center gap-4 hover:opacity-90 transition-opacity group">
-                  <div className="relative w-12 h-12 md:w-14 md:h-14 bg-white rounded-full p-1 overflow-hidden shrink-0 border-2 border-[var(--karate-yellow)] shadow-md group-hover:scale-105 transition-transform">
+                  <div className="relative w-12 h-12 md:w-14 md:h-14 bg-white rounded-full p-1 overflow-hidden shrink-0 border-2 border-[var(--karate-yellow)] shadow-sm group-hover:scale-105 transition-transform">
                     <Image src="/logo.png" alt="Shorin Kai Logo" fill className="object-cover" />
                   </div>
                   <div>
                     <h1 className="text-lg md:text-xl font-bold leading-tight tracking-tight">
                       Okinawa Shorin Kai
                     </h1>
-                    <p className="text-xs md:text-sm text-[var(--karate-yellow)] font-semibold tracking-widest uppercase">
+                    <p className="text-xs md:text-sm text-[var(--muted)] font-semibold tracking-widest uppercase">
                       Karate Do
                     </p>
                   </div>
@@ -60,7 +60,7 @@ export default function RootLayout({
           </main>
 
           {/* Footer */}
-          <footer className="bg-[var(--karate-black)] text-white py-12 mt-auto">
+          <footer className="bg-[var(--background)]/90 text-[var(--foreground)] py-12 mt-auto border-t border-[var(--card-border)]/70">
             <div className="container mx-auto px-4">
               <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                 
@@ -72,13 +72,13 @@ export default function RootLayout({
                     </div>
                     <span className="font-semibold tracking-wide">Okinawa Shorin Kai Karate Do</span>
                   </div>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-[var(--muted)]">
                     &copy; {new Date().getFullYear()} All rights reserved.
                   </p>
                 </div>
 
                 {/* Contact & Links */}
-                <div className="flex flex-col md:flex-row items-center gap-6 text-sm text-gray-400">
+                <div className="flex flex-col md:flex-row items-center gap-6 text-sm text-[var(--muted)]">
                   <a href="mailto:contact@shorinkai.in" className="hover:text-[var(--karate-green)] transition-colors flex items-center gap-2">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                     contact@shorinkai.in

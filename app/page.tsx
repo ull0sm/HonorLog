@@ -58,24 +58,29 @@ export default function Home() {
   }, [query, fuse])
 
   return (
-    <div className="min-h-screen bg-[var(--background)] flex flex-col items-center pt-[15vh] px-4">
-      
-      {/* Search Header - Google Style */}
-      <div className="text-center mb-8 animate-fadeIn space-y-4">
-         <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-[var(--foreground)]">
-          <span className="text-[var(--karate-green)]">Student</span> Profile
-        </h2>
-         <p className="text-[var(--muted)] text-lg">
-          Search for students, achievements, and ranks
-        </p>
-      </div>
+    <div className="min-h-screen bg-[var(--background)] flex flex-col items-center px-4 py-14 md:py-20">
+      <div className="w-full max-w-4xl relative animate-fadeIn">
+        <div className="absolute -top-8 -left-8 h-32 w-32 rounded-full bg-[var(--karate-yellow)]/30 blur-2xl pointer-events-none" />
+        <div className="absolute -bottom-10 -right-8 h-40 w-40 rounded-full bg-[var(--karate-green)]/25 blur-2xl pointer-events-none" />
+        <div className="relative rounded-3xl border border-[var(--card-border)] bg-[var(--card-bg)]/90 backdrop-blur-sm clean-shadow px-6 py-10 md:px-10">
+          <div className="text-center mb-8 space-y-4">
+            <p className="inline-flex items-center rounded-full border border-[var(--card-border)] bg-[var(--background)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">
+              Student Directory
+            </p>
+            <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-[var(--foreground)]">
+              <span className="text-[var(--karate-green)]">Student</span> Profile
+            </h2>
+            <p className="text-[var(--muted)] text-lg">
+              Search students, achievements, and belt progression
+            </p>
+          </div>
 
       {/* Main Search Bar */}
-      <div className={`w-full max-w-2xl relative transition-all duration-300 ${isFocused ? 'scale-[1.02]' : ''}`}>
+      <div className={`w-full max-w-2xl mx-auto relative transition-all duration-300 ${isFocused ? 'scale-[1.01]' : ''}`}>
         <div className={`
           relative flex items-center w-full
           bg-[var(--input-bg)] 
-          border-2 transition-colors duration-300 rounded-full
+          border transition-colors duration-300 rounded-2xl clean-shadow
           ${isFocused ? 'border-[var(--karate-green)] shadow-lg ring-4 ring-[var(--karate-yellow)]/40 dark:ring-[var(--karate-green)]/30' : 'border-[var(--input-border)] hover:shadow-md'}
         `}>
           <div className="pl-6 text-[var(--muted)]">
@@ -90,7 +95,7 @@ export default function Home() {
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             placeholder="Search by name or ID..."
-            className="w-full px-4 py-4 bg-transparent outline-none text-lg text-[var(--foreground)] placeholder:text-gray-400"
+            className="w-full px-4 py-4 bg-transparent outline-none text-lg text-[var(--foreground)] placeholder:text-[var(--muted)]/70"
             autoComplete="off"
             autoFocus
           />
@@ -147,16 +152,14 @@ export default function Home() {
             </div>
           </div>
         )}
-      </div>
-
-      {/* Decorative Branding - Subtle */}
-      {!query && (
-        <div className="mt-20 opacity-30 pointer-events-none select-none">
-          <div className="w-24 h-24 rounded-full border-4 border-[var(--karate-green)] flex items-center justify-center">
-             <div className="w-20 h-20 rounded-full border-4 border-[var(--karate-yellow)]"></div>
+            {!query && (
+              <div className="mt-4 text-center text-xs text-[var(--muted)]">
+                Tip: try searching by student ID (e.g. SK-0001)
+              </div>
+            )}
           </div>
         </div>
-      )}
+      </div>
     </div>
   )
 }
