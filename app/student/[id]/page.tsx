@@ -180,7 +180,7 @@ export default function StudentProfile() {
       <div style={{ height: '1px', background: 'var(--border)' }} />
 
       {/* ── Stats ── */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <StatCard label="Events"  value={student.participations.length} />
         <StatCard label="Gold"    value={goldCount}   highlight />
         <StatCard label="Silver"  value={silverCount} />

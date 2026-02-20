@@ -68,7 +68,7 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-96px)] px-4 py-16">
+    <div className="flex flex-col items-center justify-center min-h-[calc(100dvh-3.5rem)] px-4 py-12 sm:py-16">
 
       {/* ── Wordmark ── */}
       <div className="mb-10 text-center animate-enter space-y-2">

@@ -35,13 +35,13 @@ export default function RootLayout({
         <ThemeProvider>
           {/* ── Header ── */}
           <header
-            className="sticky top-0 z-50 h-12 flex items-center"
-            style={{ borderBottom: "1px solid var(--border)", background: "var(--bg)" }}
+            className="sticky top-0 z-50 h-14 flex items-center header-glass"
+            style={{ borderBottom: "1px solid var(--border)" }}
           >
-            <div className="w-full max-w-5xl mx-auto px-4 flex items-center justify-between">
+            <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between">
               <Link
                 href="/"
-                className="flex items-center gap-2.5 group"
+                className="flex items-center gap-2.5 group min-w-0"
                 style={{ color: "var(--text)" }}
               >
                 <div
@@ -50,9 +50,7 @@ export default function RootLayout({
                 >
                   <Image src="/logo.png" alt="Shorin Kai logo" fill className="object-cover" />
                 </div>
-                <span
-                  className="text-sm font-semibold tracking-tight transition-opacity group-hover:opacity-70"
-                >
+                <span className="text-sm font-semibold tracking-tight transition-opacity group-hover:opacity-70 truncate">
                   Okinawa Shorin Kai
                 </span>
               </Link>
@@ -64,27 +62,21 @@ export default function RootLayout({
           <main className="flex-1">{children}</main>
 
           {/* ── Footer ── */}
-          <footer
-            className="h-12 flex items-center"
-            style={{ borderTop: "1px solid var(--border)" }}
-          >
+          <footer style={{ borderTop: "1px solid var(--border)" }}>
             <div
-              className="w-full max-w-5xl mx-auto px-4 flex items-center justify-between text-xs"
+              className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-0 sm:h-12 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-0 text-xs"
               style={{ color: "var(--text-muted)" }}
             >
               <span>&copy; {new Date().getFullYear()} Okinawa Shorin Kai Karate Do</span>
               <div className="flex items-center gap-4">
-                <a
-                  href="mailto:contact@shorinkai.in"
-                  className="footer-link transition-colors"
-                >
+                <a href="mailto:contact@shorinkai.in" className="footer-link">
                   contact@shorinkai.in
                 </a>
                 <a
                   href="https://github.com/ull0sm/animated-garbanzo"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="footer-link transition-colors"
+                  className="footer-link"
                 >
                   GitHub
                 </a>
