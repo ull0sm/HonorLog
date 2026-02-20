@@ -1,37 +1,32 @@
 @import "tailwindcss";
 
 :root {
+  /* Brand palette */
+  --deep-navy: #011023;
+  --navy: #052558;
+  --blue: #527FB0;
+  --steel: #7C9FC9;
+  --ice: #C2E8FF;
+
+  /* UI Colors — light mode */
   --background: #ffffff;
-  --foreground: #1c1c1c;
-  
-  /* Brand Colors - Exact matches from Logo */
-  --karate-green: #76c32d;
-  --karate-yellow: #ffd700;
-  --karate-black: #000000;
-  --karate-white: #ffffff;
-  
-  /* UI Colors */
+  --foreground: #011023;
   --card-bg: #ffffff;
-  --card-border: #f0f0f0;
-  --muted: #6b7280;
+  --card-border: #C2E8FF;
+  --muted: #527FB0;
   --input-bg: #ffffff;
-  --input-border: #e5e7eb;
+  --input-border: #C2E8FF;
 }
 
 .dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  
-  /* Brand Colors adjusted for dark mode readability if needed, keeping core identity */
-  --karate-green: #76c32d; 
-  --karate-yellow: #ffd700;
-  
-  /* UI Colors Dark */
-  --card-bg: #171717;
-  --card-border: #262626;
-  --muted: #a3a3a3;
-  --input-bg: #171717;
-  --input-border: #404040;
+  /* UI Colors — dark mode */
+  --background: #011023;
+  --foreground: #C2E8FF;
+  --card-bg: #052558;
+  --card-border: rgba(82, 127, 176, 0.3);
+  --muted: #7C9FC9;
+  --input-bg: #052558;
+  --input-border: rgba(82, 127, 176, 0.4);
 }
 
 @theme inline {
@@ -40,12 +35,13 @@
   --color-card-bg: var(--card-bg);
   --color-card-border: var(--card-border);
   --color-muted: var(--muted);
-  
-  --color-karate-green: var(--karate-green);
-  --color-karate-yellow: var(--karate-yellow);
-  --color-karate-black: var(--karate-black);
-  --color-karate-white: var(--karate-white);
-  
+
+  --color-deep-navy: var(--deep-navy);
+  --color-navy: var(--navy);
+  --color-blue: var(--blue);
+  --color-steel: var(--steel);
+  --color-ice: var(--ice);
+
   --color-input-bg: var(--input-bg);
   --color-input-border: var(--input-border);
 }
@@ -57,17 +53,25 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Minimalist Utilities */
+/* Utilities */
 .clean-shadow {
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(1, 16, 35, 0.08), 0 1px 2px rgba(1, 16, 35, 0.06);
 }
 
 .hover-shadow {
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 .hover-shadow:hover {
-  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.025);
+  box-shadow: 0 10px 20px -4px rgba(82, 127, 176, 0.15);
   transform: translateY(-1px);
+}
+
+/* Glassmorphism */
+.glass {
+  background: rgba(5, 37, 88, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(82, 127, 176, 0.2);
 }
 
 /* Animations */
@@ -76,6 +80,49 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(82, 127, 176, 0); }
+  50% { box-shadow: 0 0 12px 4px rgba(82, 127, 176, 0.3); }
+}
+
 .animate-fadeIn {
   animation: fadeIn 0.4s ease-out forwards;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.5s ease-out forwards;
+}
+
+.animate-slideIn {
+  animation: slideIn 0.4s ease-out forwards;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--steel, #7C9FC9);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--blue, #527FB0);
 }
