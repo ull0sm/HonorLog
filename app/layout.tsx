@@ -76,10 +76,7 @@ export default function RootLayout({
               <div className="flex items-center gap-4">
                 <a
                   href="mailto:contact@shorinkai.in"
-                  className="transition-colors"
-                  style={{ color: "inherit" }}
-                  onMouseEnter={e => ((e.target as HTMLAnchorElement).style.color = "var(--text)")}
-                  onMouseLeave={e => ((e.target as HTMLAnchorElement).style.color = "")}
+                  className="footer-link transition-colors"
                 >
                   contact@shorinkai.in
                 </a>
@@ -87,10 +84,7 @@ export default function RootLayout({
                   href="https://github.com/ull0sm/animated-garbanzo"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="transition-colors"
-                  style={{ color: "inherit" }}
-                  onMouseEnter={e => ((e.target as HTMLAnchorElement).style.color = "var(--text)")}
-                  onMouseLeave={e => ((e.target as HTMLAnchorElement).style.color = "")}
+                  className="footer-link transition-colors"
                 >
                   GitHub
                 </a>
