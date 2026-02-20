@@ -50,7 +50,10 @@ export default function RootLayout({
                     </p>
                   </div>
                 </Link>
-                <ThemeToggle />
+                <div className="flex items-center gap-3">
+                  <span className="hidden md:inline-flex rounded-full border border-[var(--card-border)] bg-[var(--background)] px-3 py-1 text-xs font-semibold text-[var(--muted)]">Portal v1</span>
+                  <ThemeToggle />
+                </div>
               </div>
             </div>
           </header>
@@ -97,6 +100,7 @@ export default function RootLayout({
                 </div>
 
               </div>
+              <div className="mt-5 text-center text-xs text-[var(--muted)]">Built with Next.js + Supabase</div>
               </div>
             </div>
           </footer>
