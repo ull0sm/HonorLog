@@ -96,7 +96,7 @@ export default function StudentProfile() {
         
         {/* Profile Card */}
         <div className="bg-[var(--card-bg)] rounded-3xl border border-[var(--card-border)] shadow-xl overflow-hidden mb-8">
-          <div className="relative h-32 bg-gradient-to-r from-[var(--karate-green)] to-[#5eb119]">
+          <div className="relative h-32 bg-gradient-to-r from-[var(--karate-green)] to-[var(--karate-yellow)]">
              {/* Abstract Pattern overlay could go here */}
           </div>
           

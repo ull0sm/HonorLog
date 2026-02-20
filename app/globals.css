@@ -1,37 +1,37 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #1c1c1c;
+  --background: #c2e8ff;
+  --foreground: #011023;
   
   /* Brand Colors - Exact matches from Logo */
-  --karate-green: #76c32d;
-  --karate-yellow: #ffd700;
-  --karate-black: #000000;
-  --karate-white: #ffffff;
+  --karate-green: #527fb0;
+  --karate-yellow: #7c9fc9;
+  --karate-black: #011023;
+  --karate-white: #c2e8ff;
   
   /* UI Colors */
   --card-bg: #ffffff;
-  --card-border: #f0f0f0;
-  --muted: #6b7280;
+  --card-border: #7c9fc9;
+  --muted: #052558;
   --input-bg: #ffffff;
-  --input-border: #e5e7eb;
+  --input-border: #7c9fc9;
 }
 
 .dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  --background: #011023;
+  --foreground: #c2e8ff;
   
   /* Brand Colors adjusted for dark mode readability if needed, keeping core identity */
-  --karate-green: #76c32d; 
-  --karate-yellow: #ffd700;
+  --karate-green: #7c9fc9; 
+  --karate-yellow: #527fb0;
   
   /* UI Colors Dark */
-  --card-bg: #171717;
-  --card-border: #262626;
-  --muted: #a3a3a3;
-  --input-bg: #171717;
-  --input-border: #404040;
+  --card-bg: #052558;
+  --card-border: #527fb0;
+  --muted: #7c9fc9;
+  --input-bg: #052558;
+  --input-border: #527fb0;
 }
 
 @theme inline {

@@ -76,7 +76,7 @@ export default function Home() {
           relative flex items-center w-full
           bg-[var(--input-bg)] 
           border-2 transition-colors duration-300 rounded-full
-          ${isFocused ? 'border-[var(--karate-green)] shadow-lg ring-4 ring-green-50/50 dark:ring-green-900/20' : 'border-[var(--input-border)] hover:shadow-md'}
+          ${isFocused ? 'border-[var(--karate-green)] shadow-lg ring-4 ring-[var(--karate-yellow)]/40 dark:ring-[var(--karate-green)]/30' : 'border-[var(--input-border)] hover:shadow-md'}
         `}>
           <div className="pl-6 text-[var(--muted)]">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -113,7 +113,7 @@ export default function Home() {
               <div className="p-4 text-center text-[var(--muted)]">Loading directory...</div>
             ) : results.length === 0 ? (
               <div className="p-8 text-center text-[var(--muted)]">
-                <p>No matches found for <span className="font-semibold text-[var(--foreground)]">"{query}"</span></p>
+                <p>No matches found for <span className="font-semibold text-[var(--foreground)]">&quot;{query}&quot;</span></p>
               </div>
             ) : (
               <div className="max-h-[60vh] overflow-y-auto py-2">
@@ -121,7 +121,7 @@ export default function Home() {
                   <div
                     key={student.id}
                     onClick={() => router.push(`/student/${student.id}`)}
-                    className="px-6 py-3.5 hover:bg-gray-50 dark:hover:bg-neutral-800 cursor-pointer flex items-center justify-between group transition-colors"
+                    className="px-6 py-3.5 hover:bg-[var(--karate-yellow)]/20 dark:hover:bg-[var(--karate-green)]/20 cursor-pointer flex items-center justify-between group transition-colors"
                   >
                     <div>
                       <h3 className="font-semibold text-[var(--foreground)] group-hover:text-[var(--karate-green)] transition-colors">
@@ -142,7 +142,7 @@ export default function Home() {
                 ))}
               </div>
             )}
-             <div className="px-6 py-2 bg-gray-50 dark:bg-neutral-900 text-xs text-center text-[var(--muted)] border-t border-[var(--card-border)]">
+             <div className="px-6 py-2 bg-[var(--karate-yellow)]/20 dark:bg-[var(--karate-green)]/20 text-xs text-center text-[var(--muted)] border-t border-[var(--card-border)]">
                Showing top matches
             </div>
           </div>
