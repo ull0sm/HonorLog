@@ -5,7 +5,6 @@ import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import Link from 'next/link'
 
-// ... interfaces remain same ...
 interface Student {
   id: string
   full_name: string
@@ -31,201 +30,225 @@ interface Result {
   medal: string
 }
 
-// Belt styles using new palette
-const beltBadges: Record<string, string> = {
-  'White': 'bg-white border-2 border-[#7C9FC9] text-[#052558]',
-  'Yellow': 'bg-yellow-400 border-2 border-yellow-500 text-yellow-950',
-  'Green': 'bg-emerald-600 border-2 border-emerald-700 text-white',
-  'Brown': 'bg-amber-800 border-2 border-amber-900 text-amber-50',
-  'Black': 'bg-[#011023] border-2 border-[#527FB0] text-[#C2E8FF]',
+/* ─── Belt badge ─────────────────────────────────────────────── */
+function BeltBadge({ belt, size = 'sm' }: { belt: string; size?: 'sm' | 'md' }) {
+  const styles: Record<string, React.CSSProperties> = {
+    White:  { background: '#f4f4f5', color: '#52525b', border: '1px solid #d4d4d8' },
+    Yellow: { background: '#fef9c3', color: '#854d0e', border: '1px solid #fde047' },
+    Green:  { background: '#dcfce7', color: '#166534', border: '1px solid #86efac' },
+    Brown:  { background: '#ffedd5', color: '#7c2d12', border: '1px solid #fdba74' },
+    Black:  { background: '#18181b', color: '#f4f4f5', border: '1px solid #3f3f46' },
+  }
+  const pad = size === 'md' ? 'px-3 py-1 text-sm' : 'px-2 py-0.5 text-xs'
+  return (
+    <span
+      className={`inline-flex items-center rounded font-medium ${pad}`}
+      style={styles[belt] ?? { background: 'var(--bg-subtle)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}
+    >
+      {belt} Belt
+    </span>
+  )
 }
 
+/* ─── Medal chip ─────────────────────────────────────────────── */
+type MedalKey = 'GOLD' | 'SILVER' | 'BRONZE' | 'PARTICIPATION'
+
+const MEDAL: Record<MedalKey, { icon: string; style: React.CSSProperties }> = {
+  GOLD:          { icon: '🥇', style: { background: '#fef3c7', color: '#92400e', border: '1px solid #fcd34d' } },
+  SILVER:        { icon: '🥈', style: { background: '#f4f4f5', color: '#52525b', border: '1px solid #d4d4d8' } },
+  BRONZE:        { icon: '🥉', style: { background: '#ffedd5', color: '#9a3412', border: '1px solid #fdba74' } },
+  PARTICIPATION: { icon: '',   style: { background: 'var(--bg-subtle)', color: 'var(--text-muted)', border: '1px solid var(--border)' } },
+}
+
+/* ─── Stat card ──────────────────────────────────────────────── */
+function StatCard({ label, value, highlight = false }: { label: string; value: number; highlight?: boolean }) {
+  return (
+    <div
+      className="rounded-lg p-4 text-center"
+      style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+    >
+      <div
+        className="text-2xl font-bold tabular-nums"
+        style={{ color: highlight && value > 0 ? '#d97706' : 'var(--text)' }}
+      >
+        {value}
+      </div>
+      <div className="text-xs mt-0.5 font-medium" style={{ color: 'var(--text-muted)' }}>{label}</div>
+    </div>
+  )
+}
+
+/* ─── Loading spinner ────────────────────────────────────────── */
+function Spinner() {
+  return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <span
+        className="w-5 h-5 rounded-full border-2 animate-spin"
+        style={{ borderColor: 'var(--border)', borderTopColor: 'var(--accent)' }}
+      />
+    </div>
+  )
+}
+
+/* ─── Page ───────────────────────────────────────────────────── */
 export default function StudentProfile() {
   const { id } = useParams()
   const [student, setStudent] = useState<Student | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    async function fetchStudent() {
-      if (!id) return
-      const { data, error } = await supabase
-        .from('students')
-        .select(`
-          *,
-          participations (
-            id,
-            events (name, date, location),
-            results (id, category, medal)
-          )
-        `)
-        .eq('id', id)
-        .single()
-
-      if (!error) setStudent(data)
-      setLoading(false)
-    }
-    fetchStudent()
+    if (!id) return
+    supabase
+      .from('students')
+      .select(`*, participations(id, events(name, date, location), results(id, category, medal))`)
+      .eq('id', id)
+      .single()
+      .then(({ data, error }) => {
+        if (!error) setStudent(data)
+        setLoading(false)
+      })
   }, [id])
 
-  if (loading) return null
+  if (loading) return <Spinner />
 
   if (!student) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Profile not found</h1>
-          <Link href="/" className="transition-colors duration-200 hover:underline" style={{ color: '#527FB0' }}>Return Home</Link>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Profile not found.</p>
+        <Link
+          href="/"
+          className="text-sm transition-opacity hover:opacity-70"
+          style={{ color: 'var(--accent)' }}
+        >
+          ← Back to search
+        </Link>
       </div>
     )
   }
 
-  const medals = student.participations.flatMap(p => p.results)
+  const medals      = student.participations.flatMap(p => p.results)
+  const goldCount   = medals.filter(r => r.medal === 'GOLD').length
+  const silverCount = medals.filter(r => r.medal === 'SILVER').length
+  const bronzeCount = medals.filter(r => r.medal === 'BRONZE').length
+    const initials    = student.full_name.split(' ').filter(Boolean).map(n => n[0]).slice(0, 2).join('').toUpperCase()
 
   return (
-    <div className="min-h-screen bg-[var(--background)] pb-20">
-      <div className="h-6"></div>
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10 space-y-8 animate-enter">
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6">
-        {/* Back Navigation */}
-        <Link
-          href="/"
-          className="inline-flex items-center text-sm font-medium transition-colors duration-200 mb-8"
-          style={{ color: '#527FB0' }}
-          onMouseEnter={e => (e.currentTarget.style.color = '#052558')}
-          onMouseLeave={e => (e.currentTarget.style.color = '#527FB0')}
-        >
-          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-          Back to Search
-        </Link>
+      {/* ── Back ── */}
+      <Link
+        href="/"
+        className="inline-flex items-center gap-1 text-sm transition-opacity hover:opacity-70"
+        style={{ color: 'var(--text-muted)' }}
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+        Back
+      </Link>
 
-        {/* Profile Card */}
+      {/* ── Profile header ── */}
+      <div className="flex items-start gap-4">
+        {/* Avatar initials */}
         <div
-          className="rounded-3xl border shadow-xl overflow-hidden mb-8"
-          style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+          className="shrink-0 w-14 h-14 rounded-xl flex items-center justify-center text-lg font-bold select-none"
+          style={{ background: 'var(--bg-subtle)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}
         >
-          {/* Banner gradient */}
-          <div
-            className="relative h-32"
-            style={{ background: 'linear-gradient(135deg, #011023 0%, #052558 60%, #527FB0 100%)' }}
-          />
+          {initials}
+        </div>
 
-          <div className="px-8 pb-8">
-            <div className="flex justify-between items-end -mt-12 mb-6">
-              {/* Avatar */}
-              <div
-                className="w-24 h-24 rounded-2xl p-1.5 shadow-lg rotate-3"
-                style={{ background: '#052558' }}
-              >
-                <div
-                  className="w-full h-full rounded-xl flex items-center justify-center text-2xl font-bold"
-                  style={{ background: '#011023', color: '#C2E8FF' }}
-                >
-                  {student.full_name.charAt(0)}
-                </div>
-              </div>
-              {/* Belt badge */}
-              <div className={`px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider shadow-sm ${beltBadges[student.belt_rank] ?? 'bg-[#052558] text-[#C2E8FF] border-2 border-[#527FB0]'}`}>
-                {student.belt_rank} Belt
-              </div>
-            </div>
-
-            <h1 className="text-3xl font-bold text-[var(--foreground)]">{student.full_name}</h1>
-            <div className="flex items-center gap-4 mt-2 text-sm font-medium" style={{ color: 'var(--muted)' }}>
-              <span className="flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" /></svg>
-                {student.student_id}
-              </span>
-              <span>•</span>
-              <span className="flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                {student.dojo}
-              </span>
-            </div>
+        <div className="min-w-0 flex-1 pt-0.5">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <h1 className="text-xl font-bold leading-tight" style={{ color: 'var(--text)' }}>
+              {student.full_name}
+            </h1>
+            <BeltBadge belt={student.belt_rank} size="md" />
+          </div>
+          <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-1.5">
+            <span
+              className="text-xs font-mono px-1.5 py-px rounded"
+              style={{ background: 'var(--bg-subtle)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}
+            >
+              {student.student_id}
+            </span>
+            <span className="text-sm" style={{ color: 'var(--text-muted)' }}>{student.dojo}</span>
           </div>
         </div>
+      </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-          <StatCard label="Events" value={student.participations.length} valueColor="#C2E8FF" bg="#011023" />
-          <StatCard label="Gold" value={medals.filter(r => r.medal === 'GOLD').length} valueColor="#fbbf24" bg="#011023" />
-          <StatCard label="Silver" value={medals.filter(r => r.medal === 'SILVER').length} valueColor="#7C9FC9" bg="#011023" />
-          <StatCard label="Bronze" value={medals.filter(r => r.medal === 'BRONZE').length} valueColor="#fb923c" bg="#011023" />
-        </div>
+      {/* ── Divider ── */}
+      <div style={{ height: '1px', background: 'var(--border)' }} />
 
-        {/* Timeline heading */}
-        <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-[var(--foreground)]">
-          <span className="w-1.5 h-6 rounded-full" style={{ background: '#527FB0' }}></span>
-          Competition History
-        </h2>
+      {/* ── Stats ── */}
+      <div className="grid grid-cols-4 gap-3">
+        <StatCard label="Events"  value={student.participations.length} />
+        <StatCard label="Gold"    value={goldCount}   highlight />
+        <StatCard label="Silver"  value={silverCount} />
+        <StatCard label="Bronze"  value={bronzeCount} />
+      </div>
 
-        {/* Timeline */}
-        <div className="space-y-6 pl-4 ml-3" style={{ borderLeft: '2px solid var(--card-border)' }}>
-          {student.participations.map((p) => (
-            <div key={p.id} className="relative pl-8 pb-2 group">
-              {/* Timeline Dot */}
+      {/* ── Competition history ── */}
+      {student.participations.length > 0 ? (
+        <section className="space-y-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+            Competition History
+          </h2>
+
+          {student.participations.map(p => {
+            const year = new Date(p.events.date).getFullYear()
+            return (
               <div
-                className="absolute -left-[9px] top-1 w-4 h-4 rounded-full group-hover:scale-125 transition-transform"
-                style={{ background: 'var(--card-bg)', border: '4px solid #527FB0' }}
-              />
-
-              <div
-                className="p-5 rounded-2xl border clean-shadow hover-shadow transition-all"
-                style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+                key={p.id}
+                className="rounded-lg p-4 transition-colors"
+                style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+                onMouseEnter={e => ((e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border-strong)')}
+                onMouseLeave={e => ((e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border)')}
               >
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-3">
-                  <div>
-                    <h3 className="font-bold text-lg leading-tight text-[var(--foreground)]">{p.events.name}</h3>
-                    <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>{p.events.location}</p>
+                {/* Event header */}
+                <div className="flex items-start justify-between gap-4 mb-3">
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold leading-snug" style={{ color: 'var(--text)' }}>
+                      {p.events.name}
+                    </h3>
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                      {p.events.location}
+                    </p>
                   </div>
                   <span
-                    className="text-xs font-semibold px-2.5 py-1 rounded-md"
-                    style={{ background: 'rgba(82, 127, 176, 0.12)', color: 'var(--muted)' }}
+                    className="shrink-0 text-xs font-mono px-1.5 py-px rounded"
+                    style={{ background: 'var(--bg-subtle)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}
                   >
-                    {new Date(p.events.date).getFullYear()}
+                    {year}
                   </span>
                 </div>
 
-                {/* Results */}
-                <div className="flex flex-wrap gap-2">
-                  {p.results.map(r => (
-                    <div
-                      key={r.id}
-                      className={`
-                        inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border
-                        ${r.medal === 'GOLD'
-                          ? 'bg-yellow-50 border-yellow-300 text-yellow-800 dark:bg-yellow-900/20 dark:border-yellow-700 dark:text-yellow-400'
-                          : r.medal === 'SILVER'
-                          ? 'border-[#7C9FC9] text-[#7C9FC9] dark:text-[#7C9FC9]'
-                          : r.medal === 'BRONZE'
-                          ? 'bg-orange-50 border-orange-300 text-orange-800 dark:bg-orange-900/20 dark:border-orange-700 dark:text-orange-400'
-                          : 'border-[#527FB0] text-[#527FB0]'}
-                      `}
-                      style={r.medal === 'SILVER' ? { background: 'rgba(124, 159, 201, 0.1)' } : r.medal === 'PARTICIPATION' ? { background: 'rgba(82, 127, 176, 0.1)' } : undefined}
-                    >
-                      {r.medal !== 'PARTICIPATION' && <span>{r.medal === 'GOLD' ? '🥇' : r.medal === 'SILVER' ? '🥈' : '🥉'}</span>}
-                      {r.category}
-                    </div>
-                  ))}
-                </div>
+                {/* Result chips */}
+                {p.results.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {p.results.map(r => {
+                      const cfg = MEDAL[r.medal as MedalKey] ?? MEDAL.PARTICIPATION
+                      return (
+                        <span
+                          key={r.id}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                          style={cfg.style}
+                        >
+                          {cfg.icon && <span>{cfg.icon}</span>}
+                          {r.category}
+                        </span>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
-        </div>
-
-      </div>
-    </div>
-  )
-}
-
-function StatCard({ label, value, valueColor, bg }: { label: string, value: number, valueColor: string, bg: string }) {
-  return (
-    <div
-      className="rounded-2xl p-4 flex flex-col items-center justify-center border transition-colors duration-200 hover:border-[#527FB0]"
-      style={{ background: bg, borderColor: 'var(--card-border)' }}
-    >
-      <span className="text-2xl md:text-3xl font-black" style={{ color: valueColor }}>{value}</span>
-      <span className="text-xs font-bold uppercase tracking-wider mt-1" style={{ color: '#7C9FC9' }}>{label}</span>
+            )
+          })}
+        </section>
+      ) : (
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          No competitions recorded yet.
+        </p>
+      )}
     </div>
   )
 }

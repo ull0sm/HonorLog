@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import Fuse from 'fuse.js'
@@ -13,182 +13,217 @@ interface Student {
   dojo: string
 }
 
-// Belt styles using new palette
-const beltStyles: Record<string, string> = {
-  'White': 'bg-white text-[#052558] border-[#7C9FC9]',
-  'Yellow': 'bg-yellow-400 text-yellow-950 border-yellow-500',
-  'Green': 'bg-emerald-600 text-white border-emerald-700',
-  'Brown': 'bg-amber-800 text-amber-50 border-amber-900',
-  'Black': 'bg-[#011023] text-[#C2E8FF] border-[#527FB0]',
+function BeltBadge({ belt }: { belt: string }) {
+  const styles: Record<string, React.CSSProperties> = {
+    White:  { background: '#f4f4f5', color: '#52525b', border: '1px solid #d4d4d8' },
+    Yellow: { background: '#fef9c3', color: '#854d0e', border: '1px solid #fde047' },
+    Green:  { background: '#dcfce7', color: '#166534', border: '1px solid #86efac' },
+    Brown:  { background: '#ffedd5', color: '#7c2d12', border: '1px solid #fdba74' },
+    Black:  { background: '#18181b', color: '#f4f4f5', border: '1px solid #3f3f46' },
+  }
+  return (
+    <span
+      className="shrink-0 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+      style={styles[belt] ?? { background: 'var(--bg-subtle)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}
+    >
+      {belt}
+    </span>
+  )
 }
 
 export default function Home() {
   const router = useRouter()
+  const inputRef = useRef<HTMLInputElement>(null)
   const [query, setQuery] = useState('')
   const [allStudents, setAllStudents] = useState<Student[]>([])
   const [loading, setLoading] = useState(true)
-  const [isFocused, setIsFocused] = useState(false)
+  const [open, setOpen] = useState(false)
 
   useEffect(() => {
-    async function fetchStudents() {
-      const { data, error } = await supabase
-        .from('students')
-        .select('id, full_name, student_id, belt_rank, dojo')
-        .order('full_name')
-
-      if (error) {
-        console.error(error)
-      } else {
-        setAllStudents(data || [])
-      }
-      setLoading(false)
-    }
-    fetchStudents()
+    supabase
+      .from('students')
+      .select('id, full_name, student_id, belt_rank, dojo')
+      .order('full_name')
+      .then(({ data, error }) => {
+        if (!error) setAllStudents(data ?? [])
+        setLoading(false)
+      })
   }, [])
 
-  const fuse = useMemo(() => new Fuse(allStudents, {
-    keys: ['full_name', 'student_id'],
-    threshold: 0.4,
-    distance: 100,
-  }), [allStudents])
+  const fuse = useMemo(
+    () => new Fuse(allStudents, { keys: ['full_name', 'student_id'], threshold: 0.35, distance: 100 }),
+    [allStudents]
+  )
 
   const results = useMemo(() => {
     if (!query.trim()) return []
-    return fuse.search(query).slice(0, 8).map(result => result.item)
+    return fuse.search(query).slice(0, 8).map(r => r.item)
   }, [query, fuse])
 
-  return (
-    <div className="min-h-screen bg-[var(--background)] flex flex-col items-center pt-[12vh] px-4">
+  const isActive = open && query.trim().length > 0
 
-      {/* Hero Section */}
-      <div className="text-center mb-10 animate-slideUp space-y-3">
-        <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight">
-          <span style={{ background: 'linear-gradient(to right, #052558, #527FB0, #C2E8FF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-            Student Directory
-          </span>
-        </h2>
-        <p className="text-[var(--muted)] text-base md:text-lg max-w-md mx-auto">
-          Search for students, achievements, and ranks across all dojos.
+  function clear() {
+    setQuery('')
+    inputRef.current?.focus()
+  }
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-96px)] px-4 py-16">
+
+      {/* ── Wordmark ── */}
+      <div className="mb-10 text-center animate-enter space-y-2">
+        <h1
+          className="text-3xl sm:text-4xl font-bold tracking-tight"
+          style={{ color: 'var(--text)' }}
+        >
+          Student Directory
+        </h1>
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          Okinawa Shorin Kai Karate Do
         </p>
       </div>
 
-      {/* Main Search Bar */}
-      <div className={`w-full max-w-2xl relative transition-all duration-300 ${isFocused ? 'scale-[1.01]' : ''}`}>
+      {/* ── Search ── */}
+      <div className="w-full max-w-lg relative">
+
+        {/* Input wrapper */}
         <div
-          className="relative flex items-center w-full transition-all duration-300 rounded-xl"
+          className="relative flex items-center rounded-lg overflow-hidden transition-all duration-150"
           style={{
-            background: 'var(--input-bg)',
-            border: `2px solid ${isFocused ? '#527FB0' : 'var(--input-border)'}`,
-            boxShadow: isFocused ? '0 0 0 4px rgba(82, 127, 176, 0.15), 0 4px 20px rgba(82, 127, 176, 0.1)' : '0 2px 8px rgba(1, 16, 35, 0.06)',
+            background: 'var(--surface)',
+            border: open ? '1px solid var(--accent)' : '1px solid var(--border-strong)',
+            boxShadow: open ? `0 0 0 3px var(--accent-dim), var(--shadow-sm)` : 'var(--shadow-sm)',
           }}
         >
-          <div className="pl-5" style={{ color: 'var(--muted)' }}>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
+          {/* Search icon */}
+          <svg
+            className="absolute left-3.5 w-4 h-4 pointer-events-none"
+            style={{ color: 'var(--text-placeholder)' }}
+            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+
           <input
+            ref={inputRef}
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
-            placeholder="Search by name or ID..."
-            className="w-full px-4 py-4 bg-transparent outline-none text-lg text-[var(--foreground)] placeholder:text-[var(--muted)]"
+            onChange={e => setQuery(e.target.value)}
+            onFocus={() => setOpen(true)}
+            onBlur={() => setTimeout(() => setOpen(false), 120 /* allow click on result to fire before closing */)}
+            placeholder="Search by name or student ID…"
+            className="w-full pl-10 pr-10 py-3 bg-transparent text-sm outline-none"
+            style={{ color: 'var(--text)' }}
             autoComplete="off"
             autoFocus
           />
+
+          {/* Clear button */}
           {query && (
             <button
-              onClick={() => setQuery('')}
-              className="pr-5 transition-colors duration-200"
-              style={{ color: 'var(--muted)' }}
+              onMouseDown={e => { e.preventDefault(); clear() }}
+              className="absolute right-3 flex items-center justify-center w-5 h-5 rounded transition-colors"
+              style={{ color: 'var(--text-placeholder)' }}
+              aria-label="Clear search"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           )}
         </div>
 
-        {/* Floating Results Panel */}
-        {query && (
+        {/* ── Results dropdown ── */}
+        {isActive && (
           <div
-            className="absolute top-full left-0 right-0 mt-3 rounded-2xl border shadow-2xl overflow-hidden z-20 animate-fadeIn"
-            style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+            className="absolute top-full left-0 right-0 mt-1.5 rounded-lg overflow-hidden z-40 animate-enter"
+            style={{
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              boxShadow: 'var(--shadow-md)',
+            }}
           >
             {loading ? (
-              <div className="p-4 text-center" style={{ color: 'var(--muted)' }}>Loading directory...</div>
+              <div className="py-8 flex items-center justify-center gap-2" style={{ color: 'var(--text-muted)' }}>
+                <span className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                <span className="text-sm">Loading…</span>
+              </div>
             ) : results.length === 0 ? (
-              <div className="p-8 text-center" style={{ color: 'var(--muted)' }}>
-                <p>No matches found for <span className="font-semibold text-[var(--foreground)]">&quot;{query}&quot;</span></p>
+              <div className="py-10 text-center">
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                  No results for &ldquo;{query}&rdquo;
+                </p>
               </div>
             ) : (
-              <div className="max-h-[60vh] overflow-y-auto py-2">
-                {results.map((student) => (
-                  <div
-                    key={student.id}
-                    onClick={() => router.push(`/student/${student.id}`)}
-                    className="px-6 py-3.5 cursor-pointer flex items-center justify-between group transition-all duration-200 border-l-4 border-transparent"
-                    style={{ borderLeftColor: 'transparent' }}
-                    onMouseEnter={e => {
-                      (e.currentTarget as HTMLDivElement).style.background = 'rgba(194, 232, 255, 0.12)'
-                      ;(e.currentTarget as HTMLDivElement).style.borderLeftColor = '#527FB0'
-                    }}
-                    onMouseLeave={e => {
-                      (e.currentTarget as HTMLDivElement).style.background = ''
-                      ;(e.currentTarget as HTMLDivElement).style.borderLeftColor = 'transparent'
-                    }}
-                  >
-                    <div>
-                      <h3 className="font-semibold text-[var(--foreground)] transition-colors duration-200 group-hover:text-[#527FB0]">
-                        {student.full_name}
-                      </h3>
-                      <div className="text-sm flex items-center gap-2" style={{ color: 'var(--muted)' }}>
-                        <span>{student.student_id}</span>
-                        <span className="w-1 h-1 rounded-full" style={{ background: 'var(--steel)' }}></span>
-                        <span>{student.dojo}</span>
+              <ul className="py-1 max-h-72 overflow-y-auto">
+                {results.map(s => (
+                  <li key={s.id}>
+                    <button
+                      onMouseDown={() => router.push(`/student/${s.id}`)}
+                      className="w-full px-4 py-2.5 flex items-center justify-between gap-4 text-left transition-colors"
+                      style={{ background: 'transparent' }}
+                      onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-hover)')}
+                      onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.background = 'transparent')}
+                    >
+                      <div className="min-w-0">
+                        <div
+                          className="text-sm font-medium truncate"
+                          style={{ color: 'var(--text)' }}
+                        >
+                          {s.full_name}
+                        </div>
+                        <div
+                          className="text-xs mt-0.5 flex items-center gap-1.5"
+                          style={{ color: 'var(--text-muted)' }}
+                        >
+                          <span
+                            className="font-mono px-1.5 py-px rounded text-xs"
+                            style={{ background: 'var(--bg-subtle)', color: 'var(--text-muted)' }}
+                          >
+                            {s.student_id}
+                          </span>
+                          <span style={{ color: 'var(--text-placeholder)' }}>·</span>
+                          <span className="truncate">{s.dojo}</span>
+                        </div>
                       </div>
-                    </div>
-                    <div>
-                      <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${beltStyles[student.belt_rank] ?? 'bg-[#052558] text-[#C2E8FF] border-[#527FB0]'}`}>
-                        {student.belt_rank}
-                      </span>
-                    </div>
-                  </div>
+                      <BeltBadge belt={s.belt_rank} />
+                    </button>
+                  </li>
                 ))}
-              </div>
+              </ul>
             )}
+
+            {/* Footer row */}
             <div
-              className="px-6 py-2 text-xs text-center border-t"
-              style={{ background: 'rgba(82, 127, 176, 0.06)', borderColor: 'var(--card-border)', color: 'var(--muted)' }}
+              className="px-4 py-2 flex items-center justify-between border-t"
+              style={{
+                borderColor: 'var(--border)',
+                background: 'var(--bg-subtle)',
+              }}
             >
-              Showing top matches
+              <span className="text-xs" style={{ color: 'var(--text-placeholder)' }}>
+                {results.length > 0 ? `${results.length} result${results.length !== 1 ? 's' : ''}` : ''}
+              </span>
+              <kbd
+                className="text-xs px-1.5 py-px rounded font-mono"
+                style={{ background: 'var(--border)', color: 'var(--text-muted)', border: '1px solid var(--border-strong)' }}
+              >
+                ↵
+              </kbd>
             </div>
           </div>
         )}
       </div>
 
-      {/* Idle State — shown when no search query */}
+      {/* ── Idle hint ── */}
       {!query && (
-        <div className="mt-20 animate-fadeIn text-center space-y-6">
-          <div className="flex items-center justify-center gap-3">
-            <div className="w-8 h-px" style={{ background: 'linear-gradient(to right, transparent, #527FB0)' }} />
-            <span className="text-sm font-semibold tracking-widest uppercase" style={{ color: 'var(--steel)' }}>
-              Okinawa Shorin Kai
-            </span>
-            <div className="w-8 h-px" style={{ background: 'linear-gradient(to left, transparent, #527FB0)' }} />
-          </div>
-          <p className="text-[var(--muted)] text-sm max-w-xs mx-auto leading-relaxed">
-            Type a student name or ID above to explore the directory and view achievements.
-          </p>
-          {/* Decorative dots */}
-          <div className="flex items-center justify-center gap-2 pt-2">
-            <span className="w-2 h-2 rounded-full animate-pulse-glow" style={{ background: '#052558' }} />
-            <span className="w-3 h-3 rounded-full animate-pulse-glow" style={{ background: '#527FB0', animationDelay: '0.3s' }} />
-            <span className="w-2 h-2 rounded-full animate-pulse-glow" style={{ background: '#7C9FC9', animationDelay: '0.6s' }} />
-          </div>
-        </div>
+        <p
+          className="mt-6 text-xs animate-fade"
+          style={{ color: 'var(--text-placeholder)' }}
+        >
+          Start typing to search {allStudents.length > 0 ? `${allStudents.length} students` : 'the directory'}
+        </p>
       )}
     </div>
   )
