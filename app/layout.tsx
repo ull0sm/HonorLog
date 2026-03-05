@@ -68,7 +68,7 @@ export default function RootLayout({
                   contact@shorinkai.in
                 </a>
                 <a
-                  href="https://github.com/ull0sm/animated-garbanzo"
+                  href="https://github.com/ull0sm/HonorLog"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="footer-link"

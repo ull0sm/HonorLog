@@ -21,14 +21,14 @@ A modern, responsive web portal for inquiring about student profiles, achievemen
 
 This is an open source project. We welcome the community to review the code and suggest improvements.
 
-**Repository**: [https://github.com/ull0sm/animated-garbanzo.git](https://github.com/ull0sm/animated-garbanzo.git)
+**Repository**: [https://github.com/ull0sm/HonorLog.git](https://github.com/ull0sm/HonorLog.git)
 
 ## Getting Started
 
 1.  **Clone the repository**:
     ```bash
-    git clone https://github.com/ull0sm/animated-garbanzo.git
-    cd animated-garbanzo
+    git clone https://github.com/ull0sm/HonorLog.git
+    cd HonorLog
     ```
 
 2.  **Install dependencies**:

@@ -9,8 +9,8 @@ Thank you for your interest in contributing to the Okinawa Shorin Kai Student Pr
 
 2.  **Clone your Fork**:
     ```bash
-    git clone https://github.com/ull0sm/animated-garbanzo.git
-    cd animated-garbanzo
+    git clone https://github.com/ull0sm/HonorLog.git
+    cd HonorLog
     ```
 
 3.  **Create a New Branch**:
