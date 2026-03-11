@@ -1,0 +1,166 @@
+# Changelog
+
+## 2026-03-11
+
+### Overview
+
+This update was delivered across two large commits:
+
+- `4d71202` - major ui refactoring
+- `ef2225a` - refactored dashboard and added entrydesk redirect
+
+The goal of this work was to replace the original utility-first portal look with the redesigned HonorLog interface, while preserving the existing Supabase-backed student search and profile functionality.
+
+---
+
+## Change Set 1: Major UI Refactoring
+
+### Commit
+
+- `4d71202` - major ui refactoring
+
+### Why
+
+- The existing UI worked functionally, but it did not match the redesigned visual direction created in the restructure folder.
+- The redesign needed to be applied inside the current Next.js app without changing the existing search, student profile routing, or Supabase data flow.
+- The site also needed a more polished product feel across mobile and desktop.
+
+### What Changed
+
+- Rebuilt the global visual theme with updated dark/light tokens, surface styling, panel treatments, nav blur, and footer utilities.
+- Restyled the shared application shell including the top navigation and footer.
+- Restyled the homepage to match the new product-style landing layout while keeping the student search flow intact.
+- Restyled the student profile page without changing profile data behavior.
+- Fixed theme rendering behavior to avoid hydration mismatch between server and client.
+
+### Where
+
+- `app/globals.css`
+- `app/layout.tsx`
+- `app/page.tsx`
+- `app/student/[id]/page.tsx`
+- `components/ThemeToggle.tsx`
+- `lib/ThemeContext.tsx`
+
+### When
+
+- Commit date: 2026-03-11 12:49:28 +0530
+
+### How
+
+#### Global styling
+
+- Added a more opinionated design system in `app/globals.css` using reusable classes like `.panel`, `.panel-soft`, `.surface-strong`, and `.nav-blur`.
+- Reworked background, border, shadow, and muted text treatment to create a more dashboard-oriented look.
+
+#### Layout and navigation
+
+- Updated `app/layout.tsx` to align the header and footer with the redesign.
+- Tightened spacing and uppercase tracking values so labels looked less stretched.
+
+#### Homepage redesign
+
+- Replaced the earlier homepage presentation with a stronger hero, clearer search presentation, and more structured feature sections.
+- Preserved fuzzy search and navigation into student detail pages.
+
+#### Student profile redesign
+
+- Updated the profile page presentation in `app/student/[id]/page.tsx` while keeping the existing student/result/event retrieval logic unchanged.
+
+#### Theme hydration fix
+
+- Reworked `components/ThemeToggle.tsx` and `lib/ThemeContext.tsx` so the server-rendered and client-rendered output stayed consistent.
+- This addressed the hydration mismatch caused by theme-dependent icon and label rendering.
+
+### Result
+
+- HonorLog now uses the redesigned UI across the main routes.
+- Existing student lookup and profile functionality remained intact.
+- Lint and build were validated after the refactor.
+
+---
+
+## Change Set 2: Dashboard, EntryDesk Promotion, and Navigation UX
+
+### Commit
+
+- `ef2225a` - refactored dashboard and added entrydesk redirect
+
+### Why
+
+- The homepage needed a stronger statistics section that highlighted organization-wide visibility.
+- The user wanted EntryDesk marketed from HonorLog without replacing HonorLog's main function.
+- The top navigation needed to work more precisely, especially the Search action.
+- Footer and CTA links needed clearer outbound-link styling.
+
+### What Changed
+
+- Added a dashboard-style metrics section on the homepage.
+- Added count-up animation for students, dojos, events, and belt counts.
+- Ensured the stats animation triggers once and does not reset after scrolling.
+- Added EntryDesk promotional CTA content near the end of the homepage.
+- Added a dedicated search navigation component so clicking Search scrolls to and focuses the actual input.
+- Added outbound arrow indicators to the promo CTA and footer links.
+- Expanded the top nav to include `Home`, `Search`, `Contact`, and `EntryDesk`.
+
+### Where
+
+- `app/layout.tsx`
+- `app/page.tsx`
+- `components/SearchNavLink.tsx`
+
+### When
+
+- Commit date: 2026-03-11 14:13:29 +0530
+
+### How
+
+#### Scoreboard section
+
+- Added a dedicated metrics presentation on the homepage that reads more like a compact operations dashboard.
+- The metrics include:
+  - total students
+  - total dojos
+  - total events
+  - black belts
+  - brown belts
+  - green belts
+  - yellow belts
+  - white belts
+
+#### Animated numbers
+
+- Implemented count-up animation with `requestAnimationFrame`.
+- Used `IntersectionObserver` so the animation begins when the stats section becomes visible.
+- Disconnected the observer after the first trigger so the numbers do not restart on later scrolls.
+
+#### Search navigation behavior
+
+- Added `components/SearchNavLink.tsx`.
+- This component intercepts nav clicks on the homepage, scrolls the search input into view, updates the hash, and focuses the field.
+- The homepage also listens for `#search` and `#search-input` so direct navigation still works.
+
+#### EntryDesk promotion
+
+- Added a dedicated promotional card near the footer to route users to EntryDesk for event registration and organizer workflows.
+- This preserves HonorLog as the student records portal while promoting EntryDesk as the operations platform.
+
+#### Footer and link affordances
+
+- Added arrow indicators to footer and promotional outbound links.
+- Updated footer links so `Home`, `Search`, `EntryDesk`, and `GitHub repository` read consistently.
+
+### Result
+
+- The homepage now presents real organizational data in a more compelling way.
+- Search navigation is more reliable and user-friendly.
+- EntryDesk is now integrated as a marketing destination inside HonorLog.
+- The footer and CTA links better communicate navigation intent.
+
+---
+
+## Notes
+
+- These changes were intentionally focused on UI and interaction polish.
+- Core data behavior, search logic, routing, and Supabase integration were preserved.
+- For external sharing, production mode (`next build` + `next start`) is preferred over a dev tunnel to avoid dev chunk-loading issues.
