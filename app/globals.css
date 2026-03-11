@@ -3,69 +3,59 @@
 /* Class-based dark mode for Tailwind v4 utilities */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ─── Design tokens (EntryDesk Shadcn Theme) ─────────────────── */
+/* ─── Design tokens ──────────────────────────────────────────── */
 :root {
-  /* LIGHT: Energetic Olympic HonorLog */
-  --background: #ffffff;
-  --foreground: #011023;
-
-  --card: #C2E8FF;
-  --card-foreground: #011023;
-
-  --popover: #C2E8FF;
-  --popover-foreground: #011023;
-
-  --primary: #052558; 
-  --primary-foreground: #ffffff;
-
-  --secondary: #527FB0;
-  --secondary-foreground: #ffffff;
-
-  --muted: #f1f5f9;
-  --muted-foreground: #052558;
-
-  --accent: #527FB0;
-  --accent-foreground: #011023;
-
-  --destructive: #ef4444;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #10b981;
+  --primary-foreground: #052e2b;
+  --secondary: #e2e8f0;
+  --secondary-foreground: #0f172a;
+  --muted: #e2e8f0;
+  --muted-foreground: #64748b;
+  --accent: #dbe4ef;
+  --accent-foreground: #0f172a;
+  --destructive: #dc2626;
   --destructive-foreground: #ffffff;
-
-  --border: #011023;
-  --input: #011023;
-  --ring: #052558;
-
-  --radius: 0px; /* Brutalist sharp corners */
+  --border: rgba(15, 23, 42, 0.1);
+  --input: rgba(15, 23, 42, 0.14);
+  --ring: rgba(16, 185, 129, 0.45);
+  --surface: #ffffff;
+  --surface-alt: #eef2f7;
+  --surface-strong: #dbe4ef;
+  --hero-background: radial-gradient(circle at top, rgba(16, 185, 129, 0.08), transparent 30%), linear-gradient(180deg, #ffffff 0%, #f8fafc 48%, #eef2f7 100%);
+  --radius: 1rem;
 }
 
 .dark {
-  /* DARK: Underground Fight Club / Deep Blueprint */
-  --background: #011023;
+  --background: #0a1628;
   --foreground: #ffffff;
-
-  --card: #052558;
+  --card: #0d1f35;
   --card-foreground: #ffffff;
-
-  --popover: #052558;
+  --popover: #0d1f35;
   --popover-foreground: #ffffff;
-
-  --primary: #C2E8FF;
-  --primary-foreground: #011023;
-
-  --secondary: #527FB0;
+  --primary: #10b981;
+  --primary-foreground: #052e2b;
+  --secondary: #1a2f47;
   --secondary-foreground: #ffffff;
-
-  --muted: rgba(82, 127, 176, 0.4);
-  --muted-foreground: #C2E8FF;
-
-  --accent: #527FB0;
+  --muted: #1a2f47;
+  --muted-foreground: #94a3b8;
+  --accent: #1a2f47;
   --accent-foreground: #ffffff;
-
   --destructive: #7f1d1d;
   --destructive-foreground: #ffffff;
 
-  --border: #527FB0;
-  --input: #527FB0;
-  --ring: #C2E8FF;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.12);
+  --ring: rgba(16, 185, 129, 0.5);
+  --surface: #0d1f35;
+  --surface-alt: #0a1628;
+  --surface-strong: #1a2f47;
+  --hero-background: radial-gradient(circle at top, rgba(16, 185, 129, 0.14), transparent 28%), linear-gradient(180deg, #0a1628 0%, #0a1628 45%, #0d1f35 100%);
 }
 
 /* ─── Tailwind theme bridge ──────────────────────────────────── */
@@ -111,79 +101,130 @@
 /* ─── Base ───────────────────────────────────────────────────── */
 body {
   background-color: var(--color-background);
-  background-image: none;
+  background-image: var(--hero-background);
+  background-attachment: fixed;
   color: var(--color-foreground);
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-.dark body {
-  background-image: none;
-}
-
 :focus-visible {
   outline: 3px solid var(--color-ring);
   outline-offset: 2px;
-  border-radius: 0px;
+  border-radius: 0.75rem;
 }
 
-/* ─── Athletic Utilities ───────────────────────────────────────────────────── */
+::selection {
+  background: color-mix(in srgb, var(--color-primary) 30%, transparent);
+  color: var(--color-foreground);
+}
+
+/* ─── Shared UI utilities ───────────────────────────────────── */
 @layer components {
-  /* Replace glass panels with pure brutalist geometric depth */
-  .athletic-shadow {
-    box-shadow: 4px 4px 0px var(--color-foreground);
-    border: 2px solid var(--color-foreground);
-    border-radius: 0px;
-    background-color: var(--color-card);
+  .page-shell {
+    background: transparent;
   }
 
-  .athletic-shadow-sm {
-    box-shadow: 2px 2px 0px var(--color-foreground);
-    border: 2px solid var(--color-foreground);
-    border-radius: 0px;
+  .panel {
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+    box-shadow: 0 18px 40px -24px rgba(15, 23, 42, 0.28);
+    backdrop-filter: blur(10px);
   }
 
-  /* Interactive states for athletic elements */
-  .athletic-active:active {
-    box-shadow: 0px 0px 0px var(--color-foreground);
-    transform: translate(4px, 4px);
+  .panel-soft {
+    background: color-mix(in srgb, var(--surface-alt) 88%, transparent);
+    border: 1px solid var(--color-border);
+    border-radius: 0.9rem;
   }
 
-  .dark .athletic-shadow {
-    box-shadow: 4px 4px 0px var(--color-primary);
-    border: 2px solid var(--color-primary);
+  .surface-strong {
+    background: var(--surface-strong);
+    border: 1px solid var(--color-border);
+    border-radius: 0.9rem;
   }
-  .dark .athletic-shadow-sm {
-    box-shadow: 2px 2px 0px var(--color-primary);
-    border: 2px solid var(--color-primary);
+
+  .stat-tile {
+    background: color-mix(in srgb, var(--surface-alt) 92%, transparent);
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
   }
-  .dark .athletic-active:active {
-    box-shadow: 0px 0px 0px var(--color-primary);
+
+  .nav-blur {
+    background: color-mix(in srgb, var(--background) 78%, transparent);
+    border-bottom: 1px solid var(--color-border);
+    backdrop-filter: blur(14px);
+  }
+
+  .footer-link {
+    color: var(--color-muted-foreground);
+    transition: color 160ms ease;
+  }
+
+  .footer-link:hover {
+    color: var(--color-foreground);
   }
 }
 
 /* ─── Scrollbar ──────────────────────────────────────────────── */
-::-webkit-scrollbar          { width: 8px; height: 8px; }
-::-webkit-scrollbar-track    { background: transparent; }
-::-webkit-scrollbar-thumb    { background: var(--color-muted-foreground); border-radius: 8px; }
-::-webkit-scrollbar-thumb:hover { background: var(--color-foreground); }
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--color-muted-foreground) 70%, transparent);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-foreground);
+}
 
 /* ─── Animations ─────────────────────────────────────────────── */
 @keyframes enter-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes enter-fade {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.animate-enter    { animation: enter-up   0.3s ease-out both; }
-.animate-fade     { animation: enter-fade 0.2s ease-out both; }
-.animate-spin     { animation: spin 0.75s linear infinite; }
+.animate-enter {
+  animation: enter-up 0.3s ease-out both;
+}
+
+.animate-fade {
+  animation: enter-fade 0.2s ease-out both;
+}
+
+.animate-spin {
+  animation: spin 0.75s linear infinite;
+}
