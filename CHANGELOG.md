@@ -164,3 +164,98 @@ The goal of this work was to replace the original utility-first portal look with
 - These changes were intentionally focused on UI and interaction polish.
 - Core data behavior, search logic, routing, and Supabase integration were preserved.
 - For external sharing, production mode (`next build` + `next start`) is preferred over a dev tunnel to avoid dev chunk-loading issues.
+
+---
+
+## 2026-03-13
+
+### Overview
+
+This update delivers **Phase 0: foundation and route scaffolding** for the internal backend portal.
+
+- Internal portal route structure was scaffolded under `/portal` with protected and public portal boundaries.
+- Supabase helpers were split into public and auth-aware variants for future authenticated portal workflows.
+- Required Supabase environment variables were validated centrally so missing configuration fails clearly.
+- Public student search/profile behavior was preserved.
+
+---
+
+## Change Set 3: Portal Foundation and Auth-Ready Scaffolding
+
+### Commit
+
+- Working tree update (not yet committed)
+
+### Why
+
+- The repo needed a safe technical base for admin and registrar workflows before feature development.
+- Existing public student search pages needed to continue using a stable public Supabase client.
+- Internal portal routes needed early structure to prevent future cross-contamination between public and protected logic.
+
+### What Changed
+
+- Added central environment validation for required Supabase public keys.
+- Added Supabase helper modules for:
+  - browser client usage in authenticated portal contexts
+  - server client usage with cookie-aware auth handling
+  - explicitly separated public anon client for public routes
+- Updated legacy `lib/supabaseClient.ts` to reuse the dedicated public client.
+- Added portal layout scaffolding and a protected route group that enforces session presence.
+- Added portal placeholder pages for dashboard and future event routes (events list/new/detail/access/import/results).
+- Added portal logout route scaffold.
+- Added `@supabase/ssr` dependency to support Next.js server/browser auth-aware clients.
+
+### Where
+
+- `lib/env.ts`
+- `lib/supabase/client.ts`
+- `lib/supabase/server.ts`
+- `lib/supabase/publicClient.ts`
+- `lib/supabaseClient.ts`
+- `app/portal/layout.tsx`
+- `app/portal/(protected)/layout.tsx`
+- `app/portal/(protected)/page.tsx`
+- `app/portal/(protected)/_components/PortalScaffoldCard.tsx`
+- `app/portal/(protected)/events/page.tsx`
+- `app/portal/(protected)/events/new/page.tsx`
+- `app/portal/(protected)/events/[eventId]/page.tsx`
+- `app/portal/(protected)/events/[eventId]/access/page.tsx`
+- `app/portal/(protected)/events/[eventId]/import/page.tsx`
+- `app/portal/(protected)/events/[eventId]/results/page.tsx`
+- `app/portal/logout/route.ts`
+- `package.json`
+
+### When
+
+- Date logged: 2026-03-13
+
+### How
+
+#### Environment hardening
+
+- Added `lib/env.ts` with strict checks for `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+- Missing values now throw explicit startup-time errors instead of silently using placeholders.
+
+#### Supabase helper separation
+
+- Kept public pages on a dedicated `publicSupabase` client.
+- Added `createBrowserSupabaseClient()` for portal browser-side authenticated workflows.
+- Added `createServerSupabaseClient()` using `@supabase/ssr` with Next.js cookie integration.
+
+#### Portal route scaffolding
+
+- Introduced `/portal` root layout for shared portal container styling.
+- Added `(protected)` route group with an auth gate (`supabase.auth.getUser()` + redirect to `/portal/login` when absent).
+- Added placeholder pages only, with no business mutations or role-specific logic yet.
+
+### Result
+
+- Phase 0 foundations are in place for upcoming authentication and admin feature phases.
+- Public HonorLog student search/profile behavior remains untouched.
+- Clear route and helper organization now exists for future portal iterations.
+
+### Remaining For Next Phases
+
+- Implement real login UI behavior and session lifecycle handling (Phase 2).
+- Add profile/role bootstrap and authorization rules (Phase 2-3).
+- Build event CRUD, access control, import pipeline, and results workflows (Phase 4+).
