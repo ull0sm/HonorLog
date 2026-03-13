@@ -569,3 +569,101 @@ This update delivers **Phase 0: foundation and route scaffolding** for the inter
 
 - Implement registrar account assignment and event-scoped access management (Phase 5).
 - Build registrar-specific portal flow and one-event routing behavior (Phase 6).
+
+---
+
+## Change Set 8: Phase 5 – Registrar Access Control
+
+**Date:** 2026-03-13
+**Prompt:** Prompt 6 — Registrar account assignment and access control
+**Branch:** main
+
+### New Files
+
+- `lib/supabase/admin.ts` — Service-role Supabase client factory for admin user management operations. Uses `SUPABASE_SERVICE_ROLE_KEY` (server-only; never exposed to the browser). Throws a descriptive error when the key is not configured.
+
+### Modified Files
+
+- `app/portal/(protected)/events/[eventId]/access/page.tsx` — Replaced scaffold card with full Phase 5 implementation (see details below).
+
+### What Was Built
+
+#### `lib/supabase/admin.ts`
+
+- Exports `createAdminSupabaseClient()` which calls `createClient()` from `@supabase/supabase-js` using the service role key.
+- Session persistence and token auto-refresh are disabled since this client is ephemeral per request.
+- Used exclusively from server actions to call `auth.admin.createUser()`, `auth.admin.updateUserById()`, and `auth.admin.deleteUser()` (rollback only).
+
+#### `app/portal/(protected)/events/[eventId]/access/page.tsx`
+
+Five server actions were implemented:
+
+**`createRegistrarAction`**
+- Validates full name, email (regex check), password (minimum 8 characters).
+- Pre-checks that no existing profile shares the email to surface a clear "email_exists" error before reaching the auth API.
+- Calls `admin.createUser({ email_confirm: true })` so the account works immediately without an email verification flow.
+- Inserts a `profiles` row with `global_role = 'staff'` (event-specific role resides in `event_access`).
+- Inserts an `event_access` row with `role = 'event_registrar'` and the calling admin as `created_by`.
+- Full rollback on partial failure: if the `event_access` insert fails, both the `profiles` row and the auth user are deleted before redirecting with an error.
+- Surfaces `already_assigned` on DB unique constraint violation (code `23505`).
+- Surfaces `service_key_missing` when `SUPABASE_SERVICE_ROLE_KEY` is not configured rather than crashing.
+
+**`disableAccessAction`**
+- Sets `event_access.is_active = false` for a given access row.
+- Updates `updated_at` explicitly since no DB trigger is defined for that column.
+
+**`enableAccessAction`**
+- Sets `event_access.is_active = true` to restore a previously disabled assignment.
+
+**`removeAccessAction`**
+- Requires the admin to type `REMOVE` (exact uppercase) before deleting the `event_access` row.
+- Deletes only the access assignment; the underlying Supabase Auth user and profiles row are deliberately retained.
+
+**`resetPasswordAction`**
+- Accepts a new password (minimum 8 characters) and calls `admin.updateUserById()` to update the registrar's credentials immediately.
+- Password is never persisted in URL params on error; only re-entered by the admin.
+
+#### Page UI
+
+- Event header with Phase 5 label, status badges, and tab navigation matching the overview page (Access tab active).
+- Global success/error banner driven by `?success=X` and `?error=X` URL params.
+- Existing registrar assignments fetched in two queries (event_access then profiles) to avoid Supabase join syntax ambiguity with multiple FKs to the same table.
+- Per-registrar card shows: name, email, role, active/disabled badge, account-inactive badge, can-edit-results badge, assigned date, and optional expiry date.
+- Each card surfaces three inline action forms:
+  - **Disable / Re-enable** — single button toggle, no confirmation required.
+  - **Reset password** — password field + submit, `autocomplete=new-password` prevents browser auto-fill interference.
+  - **Remove** — text confirmation input (type `REMOVE`) + submit, rose-coloured to communicate destructive intent.
+- Empty state when no registrars assigned yet.
+- Create registrar form with full-name, email, and temporary-password fields; inline per-field validation errors; password field includes a note about secure sharing; `service_key_missing` renders as a distinct configuration error block.
+- Form values for name and email are preserved in URL params on error; password is deliberately excluded for security.
+
+### Edge Cases Covered
+
+| Scenario | Handling |
+|---|---|
+| Registrar assigned twice to same event | DB unique constraint caught as `already_assigned` |
+| Email reused from existing portal account | Pre-check on `profiles` table, surfaces `email_exists` |
+| Service role key not configured | `service_key_missing` error rendered inline with setup instructions |
+| Partial creation failure (profile insert fails) | Auth user deleted before redirect |
+| Partial creation failure (event_access insert fails) | Both profile and auth user deleted before redirect |
+| Disable while registrar is active | Immediate effect; registrar's next request will be session-expired |
+| Admin removes access | Only the event_access row is deleted; underlying account intact |
+| Expired access | Expiry date shown in card where `expires_at` is set |
+| Inactive profile account | "Account inactive" badge shown on registrar card |
+
+### Security Notes
+
+- Service role key is server-only; never referenced in any client component or `NEXT_PUBLIC_` variable.
+- All server actions call `requirePortalSession()` + `isSuperAdmin()` before any DB mutation.
+- Password values are never written to URL params or logs.
+- Email input is lowercased and regex-validated before any DB or auth API call.
+
+### Validation
+
+- `npm run lint` passed
+- `npm run build` passed
+
+### Remaining For Next Phases
+
+- Implement registrar-specific portal flow and one-event routing behavior (Phase 6).
+- Build JSON import pipeline with validation and preview (Phase 7).
