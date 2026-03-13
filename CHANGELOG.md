@@ -184,7 +184,7 @@ This update delivers **Phase 0: foundation and route scaffolding** for the inter
 
 ### Commit
 
-- Working tree update (not yet committed)
+- `25c6ad9` — Portal Foundation and Auth-Ready Scaffolding
 
 ### Why
 
@@ -259,3 +259,81 @@ This update delivers **Phase 0: foundation and route scaffolding** for the inter
 - Implement real login UI behavior and session lifecycle handling (Phase 2).
 - Add profile/role bootstrap and authorization rules (Phase 2-3).
 - Build event CRUD, access control, import pipeline, and results workflows (Phase 4+).
+
+---
+
+## Change Set 4: Phase 1 – Backend Portal Schema Migration
+
+### Commit
+
+- Working tree update (not yet committed)
+
+### Why
+
+- Phase 1 requires new and extended database tables before portal feature phases can begin.
+- The core `schema.sql` is reserved as the install reference for fresh databases; live databases need an additive migration instead.
+- All portal tables must exist before access control, import pipeline, and prize-entry logic can be wired in Phase 2–10.
+
+### What Changed
+
+- Created `migrations/001_phase1_portal_schema.sql` — a standalone, idempotent SQL migration.
+- Added `profiles` table to store Supabase Auth users with name, email, global role, and active flag.
+- Extended `events` table with workflow columns: `slug`, `status`, `description`, `import_status`, `results_locked`, `created_by`, `updated_at`.
+- Added idempotent constraints on `events`: `events_slug_unique`, `events_status_check`, `events_import_status_check`, `events_created_by_fkey`.
+- Added `event_access` table — event-scoped staff assignment with unique (event_id, user_id, role).
+- Added `event_import_batches` table — upload tracking with a partial unique index on (event_id, import_fingerprint).
+- Added `event_import_rows` table — per-row preview records from import parse, unique by (batch_id, row_index).
+- Added `event_categories` table — explicit per-event divisions; expression-based dedup index on all nullable dimension fields.
+- Added `event_registrations` table — confirmed import records; student_id nullable (on delete set null) for external participants.
+- Added `event_results` table — portal-native prize entries; unique (event_id, category_id, placement) enforces no duplicate placements.
+- Added `audit_logs` table — append-only action log for privileged operations.
+- Added 22 `create index if not exists` statements across all new tables and extended events columns.
+- Added `set_updated_at_timestamp()` trigger function and attached it to all mutable portal tables.
+
+### Where
+
+- `migrations/001_phase1_portal_schema.sql` (new file)
+
+### When
+
+- Date logged: 2026-03-13
+
+### How
+
+#### Separation from schema.sql
+
+- `schema.sql` remains the definitive reference for fresh installs (4 original tables + seed data, unchanged).
+- `migrations/001_phase1_portal_schema.sql` applies the Phase 1 delta to existing databases without touching schema.sql.
+
+#### Idempotency design
+
+- All new tables use `create table if not exists`.
+- `alter table events add column if not exists` guards each column addition.
+- Constraints added via `do $$ ... end $$` block with `pg_constraint` existence checks.
+- Unique indexes use `create unique index if not exists`.
+- Triggers use `drop trigger if exists` + `create trigger` to ensure clean re-runs.
+
+#### Table dependency order
+
+1. `profiles` (no table dependencies, auth FK target)
+2. `events` column extensions (references profiles)
+3. `event_access` (references events + profiles)
+4. `event_import_batches` (references events + profiles)
+5. `event_import_rows` (references event_import_batches)
+6. `event_categories` (references events)
+7. `event_registrations` (references events + students + event_categories)
+8. `event_results` (references events + event_categories + event_registrations + profiles)
+9. `audit_logs` (references events + profiles)
+
+### Result
+
+- All Phase 1 database objects exist and can be created incrementally against any existing HonorLog database.
+- `schema.sql` remains clean and unmodified for fresh-install use.
+- Phase 2 (login / profile bootstrap) and Phase 3 (authorization) can now reference the `profiles` and `event_access` tables.
+- Phase 4+ feature phases have the full table surface they need.
+
+### Remaining For Next Phases
+
+- Update `schema.sql` with the full merged schema once all Phase 1 objects are stable (optional, separate housekeeping step).
+- Implement Row Level Security policies for all portal tables (Phase 3).
+- Implement login UI, session lifecycle, and profile bootstrap (Phase 2).
