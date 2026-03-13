@@ -5,8 +5,7 @@ const REQUIRED_SUPABASE_ENV: RequiredEnvKey[] = [
     'NEXT_PUBLIC_SUPABASE_ANON_KEY',
 ]
 
-function readRequiredEnv(key: RequiredEnvKey): string {
-    const value = process.env[key]
+function readRequiredEnv(key: RequiredEnvKey, value: string | undefined): string {
 
     if (!value || value.trim().length === 0) {
         throw new Error(
@@ -18,12 +17,22 @@ function readRequiredEnv(key: RequiredEnvKey): string {
 }
 
 export const env = {
-    NEXT_PUBLIC_SUPABASE_URL: readRequiredEnv('NEXT_PUBLIC_SUPABASE_URL'),
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: readRequiredEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
+    NEXT_PUBLIC_SUPABASE_URL: readRequiredEnv(
+        'NEXT_PUBLIC_SUPABASE_URL',
+        process.env.NEXT_PUBLIC_SUPABASE_URL
+    ),
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: readRequiredEnv(
+        'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    ),
 } as const
 
 export function assertSupabaseEnv(): void {
     for (const key of REQUIRED_SUPABASE_ENV) {
-        readRequiredEnv(key)
+        const value =
+            key === 'NEXT_PUBLIC_SUPABASE_URL'
+                ? process.env.NEXT_PUBLIC_SUPABASE_URL
+                : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+        readRequiredEnv(key, value)
     }
 }
