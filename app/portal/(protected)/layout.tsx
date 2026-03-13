@@ -35,9 +35,9 @@ export default async function PortalProtectedLayout({
                                 <Link href="/portal/events" className="rounded-full border border-border px-3 py-1.5 transition-colors hover:text-foreground">
                                     Events
                                 </Link>
-                                <span className="rounded-full border border-dashed border-border px-3 py-1.5 text-muted-foreground/80">
+                                <Link href="/portal/access" className="rounded-full border border-border px-3 py-1.5 transition-colors hover:text-foreground">
                                     Access
-                                </span>
+                                </Link>
                                 <span className="rounded-full border border-dashed border-border px-3 py-1.5 text-muted-foreground/80">
                                     Audit
                                 </span>
