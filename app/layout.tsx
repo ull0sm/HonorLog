@@ -117,6 +117,12 @@ export default function RootLayout({
                     GitHub repository
                     <span className="shrink-0 text-sm leading-none" aria-hidden="true">↗</span>
                   </a>
+                  <Link
+                    href="/portal/login"
+                    className="mt-3 inline-flex w-fit text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground/45 transition-colors hover:text-muted-foreground/75"
+                  >
+                    Staff access
+                  </Link>
                   <span className="text-muted-foreground">© {new Date().getFullYear()} Okinawa Shorin Kai Karate Do</span>
                 </div>
               </div>
