@@ -1,36 +1,13 @@
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { isSuperAdmin, requirePortalSession } from '@/lib/portal/auth'
 
 export default async function PortalProtectedLayout({
     children,
 }: Readonly<{
     children: React.ReactNode
 }>) {
-    const supabase = await createServerSupabaseClient()
-    const {
-        data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-        redirect('/portal/login?reason=expired')
-    }
-
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('id, full_name, global_role, is_active')
-        .eq('id', user.id)
-        .maybeSingle()
-
-    if (!profile) {
-        await supabase.auth.signOut()
-        redirect('/portal/login?reason=no_profile')
-    }
-
-    if (!profile.is_active) {
-        await supabase.auth.signOut()
-        redirect('/portal/login?reason=inactive')
-    }
+    const { user, profile } = await requirePortalSession()
+    const superAdmin = isSuperAdmin(profile)
 
     return (
         <div className="space-y-6">
@@ -38,21 +15,33 @@ export default async function PortalProtectedLayout({
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
                         <div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                            HonorLog internal portal
+                            {superAdmin ? 'HonorLog admin portal' : 'HonorLog internal portal'}
                         </div>
-                        <h1 className="mt-1 text-xl font-bold tracking-tight text-foreground">Operations workspace</h1>
+                        <h1 className="mt-1 text-xl font-bold tracking-tight text-foreground">
+                            {superAdmin ? 'Super admin workspace' : 'Portal access restricted'}
+                        </h1>
                         <p className="mt-1 text-xs text-muted-foreground">
                             Signed in as {profile.full_name || user.email || 'portal user'} ({profile.global_role})
                         </p>
                     </div>
 
                     <nav className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                        <Link href="/portal" className="rounded-full border border-border px-3 py-1.5 transition-colors hover:text-foreground">
-                            Dashboard
-                        </Link>
-                        <Link href="/portal/events" className="rounded-full border border-border px-3 py-1.5 transition-colors hover:text-foreground">
-                            Events
-                        </Link>
+                        {superAdmin ? (
+                            <>
+                                <Link href="/portal" className="rounded-full border border-border px-3 py-1.5 transition-colors hover:text-foreground">
+                                    Dashboard
+                                </Link>
+                                <Link href="/portal/events" className="rounded-full border border-border px-3 py-1.5 transition-colors hover:text-foreground">
+                                    Events
+                                </Link>
+                                <span className="rounded-full border border-dashed border-border px-3 py-1.5 text-muted-foreground/80">
+                                    Access
+                                </span>
+                                <span className="rounded-full border border-dashed border-border px-3 py-1.5 text-muted-foreground/80">
+                                    Audit
+                                </span>
+                            </>
+                        ) : null}
                         <Link href="/portal/logout" className="rounded-full border border-border px-3 py-1.5 transition-colors hover:text-foreground">
                             Logout
                         </Link>
@@ -60,7 +49,24 @@ export default async function PortalProtectedLayout({
                 </div>
             </header>
 
-            {children}
+            {superAdmin ? (
+                children
+            ) : (
+                <section className="panel p-6 sm:p-8">
+                    <div className="inline-flex rounded-full border border-border/70 bg-background/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground backdrop-blur-sm">
+                        Access denied
+                    </div>
+                    <h2 className="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                        Super admin access is required
+                    </h2>
+                    <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
+                        Your account is signed in correctly, but this dashboard is reserved for super admins only. Registrar-specific views will be added in a later phase.
+                    </p>
+                    <div className="mt-6 rounded-2xl border border-border/70 bg-background/60 px-4 py-3 text-sm text-muted-foreground">
+                        Current role: <span className="font-semibold text-foreground">{profile.global_role}</span>
+                    </div>
+                </section>
+            )}
         </div>
     )
 }

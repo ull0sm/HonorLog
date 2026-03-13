@@ -413,3 +413,159 @@ This update delivers **Phase 0: foundation and route scaffolding** for the inter
 
 - Add role-based authorization gates for super admin dashboard access (Phase 3).
 - Introduce RLS policies to align database enforcement with portal UI/session restrictions (Phase 3+).
+
+---
+
+## Change Set 6: Phase 3 – Super Admin Dashboard Shell
+
+### Commit
+
+- Working tree update (not yet committed)
+
+### Why
+
+- Phase 2 established shared login, but all active portal users still reached the same protected shell.
+- The internal portal now needed explicit super admin authorization before management views could be exposed.
+- The event surface required a real admin-facing dashboard and listing UI instead of placeholders so later CRUD and import phases have a stable starting point.
+
+### What Changed
+
+- Added reusable portal session/profile helper logic for authenticated profile lookup.
+- Added explicit super admin gating in the protected portal shell.
+- Rendered a clear access denied state for authenticated non-admin users.
+- Replaced the placeholder `/portal` page with a super admin dashboard shell showing:
+  - event summary metrics
+  - recent events
+  - navigation into current and future admin areas
+- Replaced the placeholder `/portal/events` page with a real event listing view showing:
+  - event name
+  - date
+  - location
+  - slug presence
+  - status
+  - import status
+  - results locked state
+- Added frontend expectations to Prompt 4 in the implementation plan.
+
+### Where
+
+- `lib/portal/auth.ts` (new file)
+- `app/portal/(protected)/layout.tsx`
+- `app/portal/(protected)/page.tsx`
+- `app/portal/(protected)/events/page.tsx`
+- `BACKEND_PORTAL_IMPLEMENTATION_PLAN.md`
+
+### When
+
+- Date logged: 2026-03-13
+
+### How
+
+#### Role gating
+
+- `requirePortalSession()` now centralizes authenticated portal profile resolution.
+- `isSuperAdmin(...)` is used by the layout and admin pages so non-admin users do not trigger admin event queries.
+- Authenticated staff users see a controlled denial state instead of the dashboard.
+
+#### Admin shell
+
+- `/portal` now presents a real super admin landing view with summary cards for total, active, locked, and archived events.
+- Recent events include visible status and results-lock badges to cover archived/locked edge cases.
+
+#### Event listing
+
+- `/portal/events` now renders a structured admin list with operational metadata instead of scaffold text.
+- Empty and data-load failure states are explicit so the shell remains understandable before CRUD is implemented.
+
+### Result
+
+- Super admins now have an actual dashboard shell and event visibility surface.
+- Non-admin users are blocked from admin views with a clear access denied state.
+- Phase 4 can build event CRUD directly on top of this dashboard and list structure.
+
+### Remaining For Next Phases
+
+- Build event creation and editing flows (Phase 4).
+- Add registrar-specific routing and one-event workspace behavior (Phase 6).
+
+---
+
+## Change Set 7: Phase 4 – Event CRUD
+
+### Commit
+
+- Working tree update (not yet committed)
+
+### Why
+
+- Phase 3 introduced a super admin shell and event visibility, but event records were still read-only.
+- The portal needed real event creation and editing workflows before access-control and import phases could proceed safely.
+- Prompt 5 required status transitions, inline validation, and explicit destructive-action confirmation in a production-usable UI.
+
+### What Changed
+
+- Replaced `/portal/events/new` scaffold with a real event creation form.
+- Added server-side create action with validation for:
+  - required name, location, and date
+  - date format validity
+  - allowed status values
+  - slug sanitization and duplicate slug detection
+- Replaced `/portal/events/[eventId]` scaffold with a full event detail management page.
+- Added server-side update action to edit:
+  - name
+  - location
+  - date
+  - description
+  - slug
+  - status (draft, active, completed, locked, archived)
+- Added locked-event protection logic:
+  - locked events cannot be moved to another status
+  - locked events cannot be deleted
+- Added archive safety confirmation requirement before allowing status change to `archived`.
+- Added destructive delete flow with explicit name-typed confirmation.
+- Added event detail tab shell (overview, access, import, results) to connect upcoming phase routes.
+- Updated event listing page with a direct `Create event` CTA.
+
+### Where
+
+- `app/portal/(protected)/events/new/page.tsx`
+- `app/portal/(protected)/events/[eventId]/page.tsx`
+- `app/portal/(protected)/events/page.tsx`
+
+### When
+
+- Date logged: 2026-03-13
+
+### How
+
+#### Create flow
+
+- Introduced a server action-based form submission model for event creation.
+- Validation failures redirect back with preserved form values and inline error messaging.
+- Successful create revalidates portal event paths and redirects to the new event detail page.
+
+#### Edit and status management
+
+- Introduced a server action for event updates with strict input checks and duplicate-slug handling.
+- Status changes are constrained by lock-aware rules to prevent unsafe state transitions.
+- UI now surfaces status context and clear inline validation in the edit form.
+
+#### Destructive operations
+
+- Added a dedicated danger zone for deletion.
+- Deletion is blocked unless the admin types the exact event name.
+- Deletion is blocked for locked events to respect operational safety constraints.
+
+### Result
+
+- Super admins can now create and edit events directly in the portal.
+- Prompt 5 edge cases are covered for duplicate slug, invalid/missing inputs, and locked-event destructive restrictions.
+- Event detail now provides a connected shell for future access/import/results workflows.
+- Validation completed successfully:
+  - `npm run lint` passed
+  - `npm run build` passed
+
+### Remaining For Next Phases
+
+- Implement registrar account assignment and event-scoped access management (Phase 5).
+- Build registrar-specific portal flow and one-event routing behavior (Phase 6).

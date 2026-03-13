@@ -805,6 +805,13 @@ Deliverables:
 - brief summary of what was added and what remains
 ```
 
+Frontend expectations for Prompt 1:
+
+- portal layout should feel visually consistent with the existing HonorLog product shell
+- login page should be a real UI shell, not a raw placeholder or unstyled form dump
+- protected dashboard placeholder should clearly communicate that business tooling is not built yet
+- portal routes should look intentionally separated from public student browsing without breaking shared branding
+
 ### Prompt 2: Database schema and migration plan
 
 ```text
@@ -898,6 +905,14 @@ Deliverables:
 - access denied handling for non-admin users
 ```
 
+Frontend expectations for Prompt 4:
+
+- super admin landing page should show summary cards and a clear dashboard entry state
+- event list should expose status, import state, lock state, and basic metadata at a glance
+- non-admin users should see a clear access denied state instead of a broken or blank screen
+- empty event state should explain that admin shell is ready even before CRUD is implemented
+- future portal sections should appear in navigation as intentional placeholders, not dead-looking UI
+
 ### Prompt 5: Event CRUD
 
 ```text
@@ -925,6 +940,14 @@ Deliverables:
 - validation handling
 - event detail shell ready for later phases
 ```
+
+Frontend expectations for Prompt 5:
+
+- event create and edit forms should feel production-usable, not like temporary admin scaffolding
+- status controls should make draft, active, completed, locked, and archived states easy to understand at a glance
+- destructive actions such as archive or delete should require explicit confirmation UI
+- event detail page should introduce a tab or section shell that makes later access, import, and results areas feel connected
+- validation errors should render inline and clearly map to the affected fields
 
 ### Prompt 6: Registrar account assignment and access control
 
@@ -956,6 +979,14 @@ Deliverables:
 - backend enforcement structure for event-scoped access
 ```
 
+Frontend expectations for Prompt 6:
+
+- access control screen should clearly show who can access the event and with what status
+- registrar creation and assignment UI should make event-specific scope obvious so admins do not confuse it with global access
+- reset, disable, and expiry actions should be visible and understandable without reading backend details
+- duplicate or conflicting assignments should surface as clear UI errors instead of generic failures
+- sensitive actions should use confirmation affordances where appropriate
+
 ### Prompt 7: Registrar portal experience
 
 ```text
@@ -981,6 +1012,14 @@ Deliverables:
 - registrar-specific portal flow
 - event-scoped access checks in UI and backend data access
 ```
+
+Frontend expectations for Prompt 7:
+
+- registrar landing flow should feel intentionally smaller and simpler than the super admin dashboard
+- if exactly one active event exists, the UI should route directly into that event without extra selection friction
+- admin-only navigation and controls should be absent, not merely disabled-looking
+- no-assignment, expired-assignment, and locked-event states should each have clear explanatory UI
+- registrar pages should focus tightly on the data needed for result entry only
 
 ### Prompt 8: JSON upload, validation, and preview
 
@@ -1017,6 +1056,14 @@ Deliverables:
 - confirm import path into normalized event registration records
 ```
 
+Frontend expectations for Prompt 8:
+
+- upload screen should clearly separate file selection, validation status, preview, and final confirmation
+- preview UI should make valid, warning, duplicate, and error rows visually distinct
+- row counts and summary metrics should be visible before confirmation
+- repeated confirm attempts or stale preview state should produce explicit UI feedback
+- invalid files should fail with actionable messages, not generic upload errors
+
 ### Prompt 9: Excel template support
 
 ```text
@@ -1045,6 +1092,14 @@ Deliverables:
 - template validation
 - no duplication of core import validation logic
 ```
+
+Frontend expectations for Prompt 9:
+
+- Excel upload should feel like an extension of the existing import screen, not a separate workflow
+- template requirements should be explained in the UI before upload begins
+- malformed workbook errors should point to sheet/header/template problems in plain language
+- users should be able to understand that Excel and JSON share the same downstream validation path
+- any downloadable template link or guidance should be visually prominent and easy to find
 
 ### Prompt 10: Prize entry workflow
 
@@ -1075,6 +1130,14 @@ Deliverables:
 - permission-safe mutation flow
 ```
 
+Frontend expectations for Prompt 10:
+
+- category list should help users quickly identify which division they are entering results for
+- result entry screens should make placement order and medal assignment obvious and hard to mis-enter
+- duplicate placement and participant mismatch errors should be shown inline near the affected entry rows
+- locked category or event state should switch the UI into a clearly read-only presentation
+- admin and registrar should share the same core result-entry experience unless role differences are necessary
+
 ### Prompt 11: Audit logs, locking, and operational hardening
 
 ```text
@@ -1102,6 +1165,14 @@ Deliverables:
 - event locking controls
 - hardened mutation protections
 ```
+
+Frontend expectations for Prompt 11:
+
+- lock and unlock controls should clearly communicate operational impact before confirmation
+- audit history should be readable, filterable, and obviously admin-only
+- review surfaces should show who changed what and when without requiring raw JSON inspection for common cases
+- mutation failures near lock time or permission loss should render as controlled UX states, not broken forms
+- important hardening states should emphasize clarity over visual flourish
 
 ### Prompt 12: Final QA and production-readiness pass
 
@@ -1132,6 +1203,14 @@ Deliverables:
 - deployment/runbook notes
 - summary of residual risks if any remain
 ```
+
+Frontend expectations for Prompt 12:
+
+- all admin and registrar flows should have explicit loading, empty, success, and failure states
+- mobile layouts should remain usable for critical tasks, especially login, event navigation, imports, and result entry
+- stale-session and permission-drift issues should surface as clear UX transitions instead of confusing partial renders
+- final polish should improve clarity and resilience without introducing broad redesign churn into the public portal
+- deployment notes should call out any frontend environment or browser-behavior assumptions that matter in production
 
 ---
 
