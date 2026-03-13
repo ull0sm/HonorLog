@@ -337,3 +337,22 @@ create trigger trg_event_registrations_updated_at
 create trigger trg_event_results_updated_at
   before update on event_results
   for each row execute function set_updated_at_timestamp();
+
+-- select id, email, email_confirmed_at
+-- from auth.users
+-- where email = 'admin@example.com';
+
+-- insert into public.profiles (
+--   id,
+--   email,
+--   full_name,
+--   global_role,
+--   is_active
+-- )
+-- values (
+--   'PASTE_AUTH_USER_UUID_HERE',
+--   'admin@example.com',
+--   'Your Name',
+--   'super_admin',
+--   true
+-- );
