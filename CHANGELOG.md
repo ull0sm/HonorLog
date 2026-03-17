@@ -878,3 +878,96 @@ All null-returns replaced with redirects. Import page upgraded from bare scaffol
 - Phase 9: Prize entry workflow.
 - Phase 10: Audit logs, locking controls, and operational hardening.
 
+---
+
+## Change Set 12: Phase 9 - Prize Entry Workflow
+
+**Date:** 2026-03-17
+**Prompt:** Prompt 10 - Prize entry workflow
+**Branch:** main
+
+### Modified Files
+
+- `app/portal/(protected)/events/[eventId]/results/page.tsx` - Replaced Phase 6 placeholder with full category-driven result entry workflow and permission-safe server mutation.
+
+### What Was Built
+
+- Added full category list and result-entry experience in `/portal/events/[eventId]/results` for both super admin and registrar users.
+- Implemented a server action `saveResultAction` to create and update `event_results` rows.
+- Preserved shared experience for admin and registrar while keeping role restrictions enforced server-side.
+
+#### Category list and selection UI
+
+- Left panel now lists event categories with:
+  - participant count
+  - existing result count
+  - lock badge per category (`event_categories.is_locked`)
+- Category selection is URL-driven via `?categoryId=...` so refresh/share navigation preserves the active category.
+
+#### Result entry UI
+
+- Right panel now shows selected category detail with:
+  - existing placement rows (editable forms)
+  - "Add placement" form for new entries
+  - participant selector constrained to registrations within the selected category
+  - placement input and medal selector (`GOLD`, `SILVER`, `BRONZE`, `PARTICIPATION`, or none)
+- Existing rows show last-updated timestamp for operator clarity.
+
+#### Permission-safe backend mutation flow
+
+- `saveResultAction` enforces:
+  - valid portal session via `requirePortalSession()`
+  - super admin full access
+  - registrar must have active, non-expired `event_access` for the same event
+  - registrar must have `can_edit_results = true`
+- Event/category scope checks enforce that incoming category and registration actually belong to the selected event.
+- Snapshot fields (`participant_name_snapshot`, `dojo_snapshot`) are refreshed from selected registration at save time.
+
+#### Locking and read-only states
+
+- Event-level lock enforced from backend (`events.results_locked` or `events.status = 'locked'`).
+- Category-level lock enforced from backend (`event_categories.is_locked`).
+- UI switches into read-only mode when locked:
+  - save buttons disabled
+  - locked banner shown with explicit reason
+
+#### Edge-case enforcement
+
+- duplicate placement in same category:
+  - pre-check query + DB unique-constraint fallback (`23505`)
+- same participant assigned twice in same category:
+  - pre-check query on `(event_id, category_id, registration_id)`
+- participant/category mismatch:
+  - rejected if selected registration is not in the selected event/category
+- stale edit collision:
+  - update path validates hidden `expectedUpdatedAt` against latest row `updated_at`
+- permission drift:
+  - denied if registrar access is removed/expired/disabled between page load and submit
+
+#### Feedback UX
+
+- Added explicit success banners:
+  - `created`
+  - `updated`
+- Added explicit failure banners for:
+  - no access
+  - invalid placement/medal
+  - missing participant
+  - category mismatch
+  - participant mismatch
+  - duplicate placement
+  - duplicate participant
+  - stale edit
+  - locked state
+  - generic save failure
+
+### Validation
+
+- `npm run lint` passed
+- `npm run build` passed
+
+### Remaining For Next Phases
+
+- Phase 10: Audit logs, locking controls, and operational hardening.
+- Phase 11: QA, resilience checks, and production-readiness pass.
+
