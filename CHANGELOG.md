@@ -808,3 +808,166 @@ All null-returns replaced with redirects. Import page upgraded from bare scaffol
 - Phase 8: Excel support using the same validation and preview pipeline.
 - Phase 9: Prize entry workflow using imported registrations.
 
+---
+
+## Change Set 11: Phase 8 - Excel Template Support
+
+**Date:** 2026-03-15
+**Prompt:** Prompt 9 - Excel template support
+**Branch:** main
+
+### New Files
+
+- `public/honorlog-import-template.csv` - Downloadable template with required headers and sample rows.
+
+### Modified Files
+
+- `app/portal/(protected)/events/[eventId]/import/page.tsx` - Added Excel parsing, template validation, and unified upload flow.
+- `package.json` - Added `exceljs` dependency.
+- `package-lock.json` - Lockfile updates for `exceljs` and transitive dependencies.
+
+### What Was Built
+
+- Extended the existing import flow to accept both `.json` and `.xlsx` in the same upload entry point.
+- Replaced `uploadJsonAction` with `uploadFileAction` so file-type branching happens before shared validation.
+- Added server-side Excel parsing using `exceljs` and converted workbook rows into the same normalized participants payload used by JSON.
+- Reused the existing `parseAndValidateParticipants` pipeline without duplicating validation logic.
+- Persisted batch metadata with dynamic `source_type` (`json` or `xlsx`) while keeping the existing preview + confirm workflow unchanged.
+
+#### Template enforcement (Excel)
+
+- Required worksheet name: `Participants`.
+- Required row-1 headers:
+  - `participant_identifier`
+  - `participant_name`
+  - `dojo`
+  - `belt_rank`
+  - `gender`
+  - `age`
+  - `category`
+- Formula rejection in key identity columns:
+  - `participant_identifier`
+  - `participant_name`
+  - `category`
+- Blank rows are skipped.
+
+#### UI updates
+
+- Step 1 changed from JSON-only wording to file upload wording (`.json` + `.xlsx`).
+- Added a "Template requirements" block before upload to explain sheet/header rules and formula restrictions.
+- Added prominent downloadable template link to `/honorlog-import-template.csv`.
+- Added clear Excel-specific parse failure messaging while keeping shared error/success banner behavior.
+- Clarified in page copy that JSON and Excel share the same downstream validation path.
+
+### Edge Cases Covered
+
+- wrong sheet name
+- missing required headers
+- formulas in key columns
+- blank rows
+- duplicate identifiers
+- non-numeric age values
+
+### Validation
+
+- `npm run lint` passed
+- `npm run build` passed
+
+### Remaining For Next Phases
+
+- Phase 9: Prize entry workflow.
+- Phase 10: Audit logs, locking controls, and operational hardening.
+
+---
+
+## Change Set 12: Phase 9 - Prize Entry Workflow
+
+**Date:** 2026-03-17
+**Prompt:** Prompt 10 - Prize entry workflow
+**Branch:** main
+
+### Modified Files
+
+- `app/portal/(protected)/events/[eventId]/results/page.tsx` - Replaced Phase 6 placeholder with full category-driven result entry workflow and permission-safe server mutation.
+
+### What Was Built
+
+- Added full category list and result-entry experience in `/portal/events/[eventId]/results` for both super admin and registrar users.
+- Implemented a server action `saveResultAction` to create and update `event_results` rows.
+- Preserved shared experience for admin and registrar while keeping role restrictions enforced server-side.
+
+#### Category list and selection UI
+
+- Left panel now lists event categories with:
+  - participant count
+  - existing result count
+  - lock badge per category (`event_categories.is_locked`)
+- Category selection is URL-driven via `?categoryId=...` so refresh/share navigation preserves the active category.
+
+#### Result entry UI
+
+- Right panel now shows selected category detail with:
+  - existing placement rows (editable forms)
+  - "Add placement" form for new entries
+  - participant selector constrained to registrations within the selected category
+  - placement input and medal selector (`GOLD`, `SILVER`, `BRONZE`, `PARTICIPATION`, or none)
+- Existing rows show last-updated timestamp for operator clarity.
+
+#### Permission-safe backend mutation flow
+
+- `saveResultAction` enforces:
+  - valid portal session via `requirePortalSession()`
+  - super admin full access
+  - registrar must have active, non-expired `event_access` for the same event
+  - registrar must have `can_edit_results = true`
+- Event/category scope checks enforce that incoming category and registration actually belong to the selected event.
+- Snapshot fields (`participant_name_snapshot`, `dojo_snapshot`) are refreshed from selected registration at save time.
+
+#### Locking and read-only states
+
+- Event-level lock enforced from backend (`events.results_locked` or `events.status = 'locked'`).
+- Category-level lock enforced from backend (`event_categories.is_locked`).
+- UI switches into read-only mode when locked:
+  - save buttons disabled
+  - locked banner shown with explicit reason
+
+#### Edge-case enforcement
+
+- duplicate placement in same category:
+  - pre-check query + DB unique-constraint fallback (`23505`)
+- same participant assigned twice in same category:
+  - pre-check query on `(event_id, category_id, registration_id)`
+- participant/category mismatch:
+  - rejected if selected registration is not in the selected event/category
+- stale edit collision:
+  - update path validates hidden `expectedUpdatedAt` against latest row `updated_at`
+- permission drift:
+  - denied if registrar access is removed/expired/disabled between page load and submit
+
+#### Feedback UX
+
+- Added explicit success banners:
+  - `created`
+  - `updated`
+- Added explicit failure banners for:
+  - no access
+  - invalid placement/medal
+  - missing participant
+  - category mismatch
+  - participant mismatch
+  - duplicate placement
+  - duplicate participant
+  - stale edit
+  - locked state
+  - generic save failure
+
+### Validation
+
+- `npm run lint` passed
+- `npm run build` passed
+
+### Remaining For Next Phases
+
+- Phase 10: Audit logs, locking controls, and operational hardening.
+- Phase 11: QA, resilience checks, and production-readiness pass.
+

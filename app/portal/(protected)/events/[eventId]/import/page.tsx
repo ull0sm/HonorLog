@@ -1,3 +1,4 @@
+import ExcelJS from 'exceljs'
 import Link from 'next/link'
 import { revalidatePath } from 'next/cache'
 import { notFound, redirect } from 'next/navigation'
@@ -277,7 +278,118 @@ async function parseAndValidateParticipants(
     }
 }
 
-async function uploadJsonAction(formData: FormData) {
+// ── Excel template constants ──────────────────────────────────────────────────
+
+const EXPECTED_SHEET_NAME = 'Participants'
+
+const REQUIRED_EXCEL_HEADERS = [
+    'participant_identifier',
+    'participant_name',
+    'dojo',
+    'belt_rank',
+    'gender',
+    'age',
+    'category',
+] as const
+
+type ExcelHeader = (typeof REQUIRED_EXCEL_HEADERS)[number]
+
+const EXCEL_TO_JSON_FIELD: Record<ExcelHeader, string> = {
+    participant_identifier: 'participantIdentifier',
+    participant_name: 'participantName',
+    dojo: 'dojo',
+    belt_rank: 'beltRank',
+    gender: 'gender',
+    age: 'age',
+    category: 'category',
+}
+
+const FORMULA_SENSITIVE_COLUMNS: ExcelHeader[] = ['participant_identifier', 'participant_name', 'category']
+
+async function parseXlsxBuffer(buffer: ArrayBuffer): Promise<unknown> {
+    const workbook = new ExcelJS.Workbook()
+    // exceljs d.ts uses the pre-generic Buffer type; newer @types/node makes Buffer generic
+    // @ts-expect-error Buffer generic parameter mismatch between exceljs types and @types/node >=18
+    await workbook.xlsx.load(Buffer.from(buffer))
+
+    const ws = workbook.getWorksheet(EXPECTED_SHEET_NAME)
+    if (!ws) {
+        const found = workbook.worksheets.map((s) => `"${s.name}"`).join(', ') || '(none)'
+        throw new Error(
+            `Sheet named "${EXPECTED_SHEET_NAME}" not found. Sheets in file: ${found}. ` +
+            `Rename your sheet tab to "${EXPECTED_SHEET_NAME}" and re-upload.`,
+        )
+    }
+
+    // Build header → 1-based column index map from row 1
+    const headerColIndex: Record<string, number> = {}
+    ws.getRow(1).eachCell({ includeEmpty: true }, (cell, colNumber) => {
+        const headerText = String(cell.value ?? '').trim().toLowerCase()
+        if (headerText) headerColIndex[headerText] = colNumber
+    })
+
+    const missingHeaders = REQUIRED_EXCEL_HEADERS.filter((h) => !(h in headerColIndex))
+    if (missingHeaders.length > 0) {
+        throw new Error(
+            `Missing required column${missingHeaders.length > 1 ? 's' : ''}: ${missingHeaders.join(', ')}. ` +
+            `All required columns: ${REQUIRED_EXCEL_HEADERS.join(', ')}.`,
+        )
+    }
+
+    const participants: Record<string, unknown>[] = []
+    const nameColIdx = headerColIndex['participant_name']
+
+    for (let rowNumber = 2; rowNumber <= ws.rowCount; rowNumber++) {
+        const row = ws.getRow(rowNumber)
+
+        // Skip blank rows — participant_name is the blank-row signal
+        const nameCell = row.getCell(nameColIdx)
+        if (!nameCell || String(nameCell.value ?? '').trim() === '') continue
+
+        // Reject formulas in key identity columns
+        for (const header of FORMULA_SENSITIVE_COLUMNS) {
+            const colIdx = headerColIndex[header]
+            const cell = row.getCell(colIdx)
+            const isFormula =
+                typeof cell.value === 'object' && cell.value !== null && 'formula' in cell.value
+            if (isFormula) {
+                throw new Error(
+                    `Row ${rowNumber}: formula detected in "${header}" column. ` +
+                    `Replace formulas with plain text values before uploading.`,
+                )
+            }
+        }
+
+        const record: Record<string, unknown> = {}
+        for (const header of REQUIRED_EXCEL_HEADERS) {
+            const field = EXCEL_TO_JSON_FIELD[header]
+            const colIdx = headerColIndex[header]
+            const cell = row.getCell(colIdx)
+            const v = cell.value
+
+            if (v === null || v === undefined || String(v).trim() === '') {
+                record[field] = null
+            } else if (header === 'age') {
+                // Preserve numeric type so parseAge handles it correctly
+                record[field] = typeof v === 'number' ? v : String(v).trim()
+            } else {
+                record[field] = String(v).trim()
+            }
+        }
+
+        participants.push(record)
+    }
+
+    if (participants.length === 0) {
+        throw new Error(
+            'The workbook contains no data rows under the header. Add participant rows below row 1.',
+        )
+    }
+
+    return { participants }
+}
+
+async function uploadFileAction(formData: FormData) {
     'use server'
 
     const { supabase, profile } = await requirePortalSession()
@@ -286,25 +398,42 @@ async function uploadJsonAction(formData: FormData) {
     const eventId = String(formData.get('eventId') ?? '').trim()
     if (!eventId) redirect('/portal/events')
 
-    const file = formData.get('jsonFile') as File | null
+    const file = formData.get('importFile') as File | null
     if (!file || file.size === 0) {
         redirect(buildImportRedirect(eventId, { error: 'missing_file' }))
     }
 
-    if (!file.name.toLowerCase().endsWith('.json')) {
+    const fileName = file.name.toLowerCase()
+    const isJson = fileName.endsWith('.json')
+    const isXlsx = fileName.endsWith('.xlsx')
+
+    if (!isJson && !isXlsx) {
         redirect(buildImportRedirect(eventId, { error: 'unsupported_file' }))
     }
 
-    const text = await file.text()
-    if (!text.trim()) {
-        redirect(buildImportRedirect(eventId, { error: 'empty_file' }))
-    }
-
     let parsedJson: unknown
-    try {
-        parsedJson = JSON.parse(text)
-    } catch {
-        redirect(buildImportRedirect(eventId, { error: 'invalid_json' }))
+    let sourceType = 'json'
+
+    if (isJson) {
+        const text = await file.text()
+        if (!text.trim()) {
+            redirect(buildImportRedirect(eventId, { error: 'empty_file' }))
+        }
+        try {
+            parsedJson = JSON.parse(text)
+        } catch {
+            redirect(buildImportRedirect(eventId, { error: 'invalid_json' }))
+        }
+        sourceType = 'json'
+    } else {
+        const arrayBuffer = await file.arrayBuffer()
+        try {
+            parsedJson = await parseXlsxBuffer(arrayBuffer)
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Excel parse failed.'
+            redirect(buildImportRedirect(eventId, { error: 'excel_parse_failed', message }))
+        }
+        sourceType = 'xlsx'
     }
 
     const { data: event } = await supabase
@@ -340,7 +469,7 @@ async function uploadJsonAction(formData: FormData) {
             }>,
         )
     } catch (error) {
-        const message = error instanceof Error ? error.message : 'JSON parse failed.'
+        const message = error instanceof Error ? error.message : 'Parse failed.'
         redirect(buildImportRedirect(eventId, { error: 'parse_failed', message }))
     }
 
@@ -401,7 +530,7 @@ async function uploadJsonAction(formData: FormData) {
         .insert({
             event_id: eventId,
             uploaded_by: profile.id,
-            source_type: 'json',
+            source_type: sourceType,
             source_filename: file.name,
             import_fingerprint: importFingerprint,
             status: 'validated',
@@ -650,16 +779,17 @@ export default async function PortalEventImportPage({ params, searchParams }: Po
     const success = query?.success
 
     const errorMessageMap: Record<string, string> = {
-        missing_file: 'Select a JSON file to upload.',
-        unsupported_file: 'Only .json files are supported in Phase 7.',
+        missing_file: 'Select a .json or .xlsx file to upload.',
+        unsupported_file: 'Only .json and .xlsx files are supported.',
         empty_file: 'The uploaded file is empty.',
         invalid_json: 'The file is not valid JSON.',
-        parse_failed: query?.message || 'Could not parse the JSON payload.',
+        excel_parse_failed: query?.message || 'Could not read the Excel workbook.',
+        parse_failed: query?.message || 'Could not parse the upload payload.',
         batch_create_failed: 'Could not create an import batch. Please try again.',
         row_insert_failed: 'Preview rows could not be stored. Please retry upload.',
         confirm_required: 'Tick the confirmation checkbox before importing.',
         repeated_confirm: 'This batch was already imported. Re-confirm is blocked.',
-        stale_preview: 'The preview is stale or unavailable. Re-upload JSON to refresh validation.',
+        stale_preview: 'The preview is stale or unavailable. Re-upload the file to refresh validation.',
         blocking_rows: 'Import blocked: resolve duplicate/error rows before confirmation.',
         confirm_failed: 'Import confirmation failed. No changes were finalized.',
     }
@@ -672,11 +802,11 @@ export default async function PortalEventImportPage({ params, searchParams }: Po
                 <div className="flex flex-wrap items-start justify-between gap-4">
                     <div className="max-w-3xl">
                         <div className="inline-flex rounded-full border border-border/70 bg-background/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground backdrop-blur-sm">
-                            Phase 7 · Import
+                            Import
                         </div>
                         <h2 className="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">{event.name}</h2>
                         <p className="mt-3 text-sm leading-7 text-muted-foreground sm:text-base">
-                            JSON and Excel upload, validation, preview, and confirm-import workflows will be built here in Phase 7.
+                            Upload participant data as JSON or Excel. Both formats share the same validation and preview pipeline before final confirmation.
                         </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
@@ -710,10 +840,10 @@ export default async function PortalEventImportPage({ params, searchParams }: Po
             <div className="panel p-6 sm:p-8">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Step 1 · Upload JSON</div>
-                        <h3 className="mt-2 text-2xl font-bold tracking-tight text-foreground">Import JSON registrations</h3>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Step 1 · Upload file</div>
+                        <h3 className="mt-2 text-2xl font-bold tracking-tight text-foreground">Import registrations</h3>
                         <p className="mt-2 text-sm text-muted-foreground">
-                            Upload participant JSON for server-side validation. Preview is persisted in import batches before final confirmation.
+                            Upload participant data as JSON or Excel. Both formats go through the same validation pipeline before you can confirm import.
                         </p>
                     </div>
                     <div className="rounded-2xl border border-border/70 bg-background/60 px-4 py-3 text-xs text-muted-foreground">
@@ -721,14 +851,43 @@ export default async function PortalEventImportPage({ params, searchParams }: Po
                     </div>
                 </div>
 
-                <form action={uploadJsonAction} className="mt-5 grid gap-4">
+                <div className="mt-5 rounded-2xl border border-border/70 bg-background/60 p-4">
+                    <div className="text-xs font-semibold uppercase tracking-[0.14em] text-foreground">Template requirements</div>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                        Excel workbooks must use a sheet named{' '}
+                        <span className="font-semibold text-foreground">Participants</span> with the following column headers in row 1. No merged cells, no formulas in identity columns.
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                        {(['participant_identifier', 'participant_name', 'dojo', 'belt_rank', 'gender', 'age', 'category'] as const).map((col) => (
+                            <code
+                                key={col}
+                                className="rounded-full border border-border bg-background px-2.5 py-0.5 font-mono text-[11px] text-foreground"
+                            >
+                                {col}
+                            </code>
+                        ))}
+                    </div>
+                    <p className="mt-3 text-xs text-muted-foreground">
+                        JSON format uses the same fields in camelCase under a{' '}
+                        <code className="font-mono text-foreground">participants</code> array. Both formats share identical downstream validation.
+                    </p>
+                    <a
+                        href="/honorlog-import-template.csv"
+                        download="honorlog-import-template.csv"
+                        className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-foreground transition-colors hover:bg-background/80"
+                    >
+                        Download CSV template
+                    </a>
+                </div>
+
+                <form action={uploadFileAction} className="mt-5 grid gap-4">
                     <input type="hidden" name="eventId" value={eventId} />
                     <label className="block">
-                        <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-foreground">JSON file</span>
+                        <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-foreground">Import file (.json or .xlsx)</span>
                         <input
                             type="file"
-                            name="jsonFile"
-                            accept=".json,application/json"
+                            name="importFile"
+                            accept=".json,application/json,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                             className="w-full rounded-2xl border border-border bg-background/70 px-4 py-3 text-sm text-foreground file:mr-3 file:rounded-full file:border-0 file:bg-primary file:px-4 file:py-2 file:text-xs file:font-semibold file:uppercase file:tracking-[0.12em] file:text-primary-foreground"
                         />
                     </label>
