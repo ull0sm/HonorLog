@@ -19,11 +19,11 @@ function getReasonMessage(reason?: string, error?: string) {
     }
 
     if (reason === 'no_profile') {
-        return 'Your account does not have a portal profile yet. Contact an administrator.'
+        return 'Your account does not have a portal profile yet. Contact a super admin.'
     }
 
     if (reason === 'inactive') {
-        return 'Your account is inactive. Contact an administrator.'
+        return 'Your account is inactive. Contact a super admin.'
     }
 
     if (reason === 'signed_out') {

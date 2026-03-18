@@ -822,7 +822,7 @@ export default async function PortalEventImportPage({ params, searchParams }: Po
         excel_parse_failed: query?.message || 'Could not read the Excel workbook.',
         parse_failed: query?.message || 'Could not parse the upload payload.',
         batch_create_failed: 'Could not create an import batch. Please try again.',
-        row_insert_failed: 'Preview rows could not be stored. Please retry upload.',
+        row_insert_failed: 'Preview rows could not be stored. Please upload again.',
         confirm_required: 'Tick the confirmation checkbox before importing.',
         repeated_confirm: 'This batch was already imported. Re-confirm is blocked.',
         stale_preview: 'The preview is stale or unavailable. Re-upload the file to refresh validation.',

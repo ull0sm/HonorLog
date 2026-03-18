@@ -115,7 +115,7 @@ export default async function PortalDashboardPage() {
                 </h2>
                 <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
                     {hasDisabled
-                        ? 'A super admin has disabled your access to this event. Contact your event administrator for assistance.'
+                        ? 'A super admin has disabled your access to this event. Contact a super admin for assistance.'
                         : 'Your account is set up but has not been assigned to an event yet. A super admin needs to create your event access before you can enter results.'}
                 </p>
             </section>
