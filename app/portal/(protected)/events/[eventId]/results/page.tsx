@@ -7,6 +7,7 @@ import {
     isSuperAdmin,
     requirePortalSession,
 } from '@/lib/portal/auth'
+import { writeAuditLogSafe } from '@/lib/portal/audit'
 
 function getStatusTone(status: string) {
     if (status === 'active') return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
@@ -180,9 +181,17 @@ async function saveResultAction(formData: FormData) {
     if (resultId) {
         const { data: existing } = await supabase
             .from('event_results')
-            .select('id, event_id, category_id, updated_at')
+            .select('id, event_id, category_id, registration_id, placement, medal, updated_at')
             .eq('id', resultId)
-            .maybeSingle<{ id: string; event_id: string; category_id: string; updated_at: string }>()
+            .maybeSingle<{
+                id: string
+                event_id: string
+                category_id: string
+                registration_id: string | null
+                placement: number
+                medal: Medal | null
+                updated_at: string
+            }>()
 
         if (!existing || existing.event_id !== eventId || existing.category_id !== categoryId) {
             redirect(buildResultsRedirect(eventId, categoryId, { error: 'stale_edit' }))
@@ -215,7 +224,28 @@ async function saveResultAction(formData: FormData) {
             redirect(buildResultsRedirect(eventId, categoryId, { error: 'save_failed' }))
         }
 
+        await writeAuditLogSafe(supabase, {
+            actorUserId: profile.id,
+            action: 'result_updated',
+            entityType: 'event_result',
+            entityId: resultId,
+            eventId,
+            beforeState: {
+                category_id: existing.category_id,
+                registration_id: existing.registration_id,
+                placement: existing.placement,
+                medal: existing.medal,
+            },
+            afterState: {
+                category_id: categoryId,
+                registration_id: registration.id,
+                placement,
+                medal: medalRaw ? (medalRaw as Medal) : null,
+            },
+        })
+
         revalidatePath(`/portal/events/${eventId}/results`)
+        revalidatePath('/portal/audit')
         redirect(buildResultsRedirect(eventId, categoryId, { success: 'updated' }))
     }
 
@@ -237,7 +267,21 @@ async function saveResultAction(formData: FormData) {
         redirect(buildResultsRedirect(eventId, categoryId, { error: 'save_failed' }))
     }
 
+    await writeAuditLogSafe(supabase, {
+        actorUserId: profile.id,
+        action: 'result_created',
+        entityType: 'event_result',
+        eventId,
+        afterState: {
+            category_id: categoryId,
+            registration_id: registration.id,
+            placement,
+            medal: medalRaw ? (medalRaw as Medal) : null,
+        },
+    })
+
     revalidatePath(`/portal/events/${eventId}/results`)
+    revalidatePath('/portal/audit')
     redirect(buildResultsRedirect(eventId, categoryId, { success: 'created' }))
 }
 
@@ -497,8 +541,8 @@ export default async function PortalEventResultsPage({ params, searchParams }: P
                                         key={category.id}
                                         href={`/portal/events/${eventId}/results?categoryId=${category.id}`}
                                         className={`block rounded-2xl border px-4 py-3 transition-colors ${active
-                                                ? 'border-primary/60 bg-primary/5'
-                                                : 'border-border bg-background/60 hover:border-border/80'
+                                            ? 'border-primary/60 bg-primary/5'
+                                            : 'border-border bg-background/60 hover:border-border/80'
                                             }`}
                                     >
                                         <div className="flex items-start justify-between gap-3">

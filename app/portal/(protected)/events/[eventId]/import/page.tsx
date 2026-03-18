@@ -7,6 +7,7 @@ import {
     isSuperAdmin,
     requirePortalSession,
 } from '@/lib/portal/auth'
+import { writeAuditLogSafe } from '@/lib/portal/audit'
 
 function getStatusTone(status: string) {
     if (status === 'active') return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
@@ -680,9 +681,22 @@ async function confirmImportAction(formData: FormData) {
         .update({ import_status: 'imported' })
         .eq('id', eventId)
 
+    await writeAuditLogSafe(supabase, {
+        actorUserId: profile.id,
+        action: 'import_confirmed',
+        entityType: 'event_import_batch',
+        entityId: batchId,
+        eventId,
+        afterState: {
+            imported_rows: inserts.length,
+            status: 'confirmed',
+        },
+    })
+
     revalidatePath('/portal/events')
     revalidatePath(`/portal/events/${eventId}`)
     revalidatePath(`/portal/events/${eventId}/import`)
+    revalidatePath('/portal/audit')
     redirect(buildImportRedirect(eventId, { batchId, success: 'imported' }))
 }
 

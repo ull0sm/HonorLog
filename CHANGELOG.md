@@ -971,3 +971,99 @@ All null-returns replaced with redirects. Import page upgraded from bare scaffol
 - Phase 10: Audit logs, locking controls, and operational hardening.
 - Phase 11: QA, resilience checks, and production-readiness pass.
 
+---
+
+## Change Set 13: Phase 10 - Audit Logs, Locking, and Operational Hardening
+
+**Date:** 2026-03-18
+**Prompt:** Prompt 11 - Audit logs, locking, and operational hardening
+**Branch:** main
+
+### New Files
+
+- `lib/portal/audit.ts` - shared safe audit logger utility (`writeAuditLogSafe`) with non-blocking failure handling.
+- `app/portal/(protected)/audit/page.tsx` - admin-only audit review page with filters.
+
+### Modified Files
+
+- `app/portal/(protected)/layout.tsx` - replaced Audit placeholder with real admin link.
+- `app/portal/(protected)/events/new/page.tsx` - added `event_created` audit logging.
+- `app/portal/(protected)/events/[eventId]/page.tsx` - added lock/unlock controls, lock mutation action, and event update/delete/lock audit logging.
+- `app/portal/(protected)/events/[eventId]/access/page.tsx` - added audit logging for registrar assignment, enable/disable/remove, and password reset actions.
+- `app/portal/(protected)/events/[eventId]/import/page.tsx` - added audit logging on confirmed import.
+- `app/portal/(protected)/events/[eventId]/results/page.tsx` - added audit logging on result create/update actions.
+
+### What Was Built
+
+#### Audit pipeline
+
+- Added centralized `writeAuditLogSafe(...)` helper that writes to `audit_logs`.
+- Audit writes are best-effort and non-blocking:
+  - mutation success is never rolled back when audit insertion fails
+  - failures are logged server-side with action/context metadata
+- Added audit events across critical operations:
+  - `event_created`
+  - `event_updated`
+  - `event_deleted`
+  - `registrar_assigned`
+  - `registrar_access_disabled`
+  - `registrar_access_enabled`
+  - `registrar_access_removed`
+  - `registrar_password_reset`
+  - `import_confirmed`
+  - `result_created`
+  - `result_updated`
+  - `results_lock_toggled`
+
+#### Event lock controls
+
+- Added explicit lock/unlock controls on event detail page (`/portal/events/[eventId]`).
+- Lock action requires typed confirmation:
+  - `LOCK` to lock
+  - `UNLOCK` to unlock
+- Lock toggles `events.results_locked`, and all relevant pages are revalidated.
+- Clear success/error states are surfaced in UI for lock operation outcomes.
+
+#### Backend lock enforcement hardening
+
+- Registrar result writes were already backend-gated in Phase 9 and remain enforced at submit time.
+- Save-time checks continue to block writes when:
+  - event lock is active (`results_locked` or `status = 'locked'`)
+  - category lock is active (`event_categories.is_locked`)
+  - registrar lost access mid-session
+- This ensures lock and permission enforcement is backend-driven, not UI-only.
+
+#### Admin audit review surface
+
+- Added `/portal/audit` page (super admin only).
+- Provides readable audit entries with context:
+  - action name
+  - actor identity
+  - entity type/id
+  - event context
+  - timestamp
+- Added filter controls:
+  - action substring
+  - event id
+  - free-text search (action/entity/actor/event)
+
+### Edge Cases Covered
+
+- user loses access after page load:
+  - result/action writes re-check access and fail gracefully
+- concurrent edits near lock time:
+  - save path re-reads lock state at mutation time and blocks writes if lock is active
+- audit insert failures:
+  - mutation remains successful; failure is logged server-side without breaking UX
+- lock toggled during active registrar session:
+  - subsequent registrar writes are rejected by backend lock checks
+
+### Validation
+
+- `npm run lint` passed
+- `npm run build` passed
+
+### Remaining For Next Phases
+
+- Phase 11: QA, resilience checks, and production-readiness pass.
+

@@ -6,6 +6,7 @@ import {
     isSuperAdmin,
     requirePortalSession,
 } from '@/lib/portal/auth'
+import { writeAuditLogSafe } from '@/lib/portal/audit'
 import { createAdminSupabaseClient } from '@/lib/supabase/admin'
 
 // ---------------------------------------------------------------------------
@@ -196,7 +197,23 @@ async function createRegistrarAction(formData: FormData) {
         redirect(buildAccessRedirect(eventId, { ...persistable, error: 'create_failed' }))
     }
 
+    await writeAuditLogSafe(supabase, {
+        actorUserId: profile.id,
+        action: 'registrar_assigned',
+        entityType: 'event_access',
+        eventId,
+        afterState: {
+            event_id: eventId,
+            user_id: newUserId,
+            role: 'event_registrar',
+            is_active: true,
+            can_edit_results: true,
+            email,
+        },
+    })
+
     revalidatePath(`/portal/events/${eventId}/access`)
+    revalidatePath('/portal/audit')
     redirect(buildAccessRedirect(eventId, { success: 'created' }))
 }
 
@@ -220,7 +237,17 @@ async function disableAccessAction(formData: FormData) {
         redirect(buildAccessRedirect(eventId, { error: 'disable_failed' }))
     }
 
+    await writeAuditLogSafe(supabase, {
+        actorUserId: profile.id,
+        action: 'registrar_access_disabled',
+        entityType: 'event_access',
+        entityId: accessId,
+        eventId,
+        afterState: { is_active: false },
+    })
+
     revalidatePath(`/portal/events/${eventId}/access`)
+    revalidatePath('/portal/audit')
     redirect(buildAccessRedirect(eventId, { success: 'disabled' }))
 }
 
@@ -244,7 +271,17 @@ async function enableAccessAction(formData: FormData) {
         redirect(buildAccessRedirect(eventId, { error: 'enable_failed' }))
     }
 
+    await writeAuditLogSafe(supabase, {
+        actorUserId: profile.id,
+        action: 'registrar_access_enabled',
+        entityType: 'event_access',
+        entityId: accessId,
+        eventId,
+        afterState: { is_active: true },
+    })
+
     revalidatePath(`/portal/events/${eventId}/access`)
+    revalidatePath('/portal/audit')
     redirect(buildAccessRedirect(eventId, { success: 'enabled' }))
 }
 
@@ -270,14 +307,23 @@ async function removeAccessAction(formData: FormData) {
         redirect(buildAccessRedirect(eventId, { error: 'remove_failed' }))
     }
 
+    await writeAuditLogSafe(supabase, {
+        actorUserId: profile.id,
+        action: 'registrar_access_removed',
+        entityType: 'event_access',
+        entityId: accessId,
+        eventId,
+    })
+
     revalidatePath(`/portal/events/${eventId}/access`)
+    revalidatePath('/portal/audit')
     redirect(buildAccessRedirect(eventId, { success: 'removed' }))
 }
 
 async function resetPasswordAction(formData: FormData) {
     'use server'
 
-    const { profile } = await requirePortalSession()
+    const { supabase, profile } = await requirePortalSession()
     if (!isSuperAdmin(profile)) redirect('/portal')
 
     const eventId = String(formData.get('eventId') ?? '').trim()
@@ -305,7 +351,16 @@ async function resetPasswordAction(formData: FormData) {
         redirect(buildAccessRedirect(eventId, { error: 'reset_failed' }))
     }
 
+    await writeAuditLogSafe(supabase, {
+        actorUserId: profile.id,
+        action: 'registrar_password_reset',
+        entityType: 'profile',
+        entityId: userId,
+        eventId,
+    })
+
     revalidatePath(`/portal/events/${eventId}/access`)
+    revalidatePath('/portal/audit')
     redirect(buildAccessRedirect(eventId, { success: 'reset' }))
 }
 
