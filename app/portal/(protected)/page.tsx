@@ -26,6 +26,14 @@ function getStatusTone(status: string) {
     return 'bg-amber-500/15 text-amber-700 dark:text-amber-300'
 }
 
+function formatAuditAction(action: string) {
+    return action
+        .split('_')
+        .filter(Boolean)
+        .map((part) => part[0].toUpperCase() + part.slice(1))
+        .join(' ')
+}
+
 export default async function PortalDashboardPage() {
     const { supabase, profile } = await requirePortalSession()
 
@@ -134,24 +142,17 @@ export default async function PortalDashboardPage() {
     const archivedEvents = eventRows.filter((event) => event.status === 'archived').length
     const latestEvents = eventRows.slice(0, 4)
 
+    const { data: rawAuditLogs } = await supabase
+        .from('audit_logs')
+        .select('id, action, event_id, created_at')
+        .order('created_at', { ascending: false })
+        .limit(5)
+
+    const auditLogs = rawAuditLogs ?? []
+    const eventNameById = new Map(eventRows.map((event) => [event.id, event.name]))
+
     return (
         <div className="space-y-6">
-            <section className="panel p-6 sm:p-8">
-                <div className="flex flex-wrap items-start justify-between gap-5">
-                    <div className="max-w-2xl">
-                        <div className="inline-flex rounded-full border border-border/70 bg-background/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground backdrop-blur-sm">
-                            Super admin dashboard
-                        </div>
-                        <h2 className="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                            Manage events from one internal workspace
-                        </h2>
-                        <p className="mt-3 text-sm leading-7 text-muted-foreground sm:text-base">
-                            Welcome back, {profile.full_name || profile.email}. Use this dashboard to monitor event status, access operations, and audit visibility from one place.
-                        </p>
-                    </div>
-                </div>
-            </section>
-
             <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <article className="panel px-5 py-5">
                     <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Total events</div>
@@ -231,19 +232,38 @@ export default async function PortalDashboardPage() {
                 </div>
 
                 <aside className="panel p-6 sm:p-7">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Navigation</div>
-                    <h3 className="mt-2 text-2xl font-bold tracking-tight text-foreground">Operations</h3>
-                    <div className="mt-5 grid gap-3">
-                        <Link href="/portal/events" className="panel-soft rounded-3xl px-4 py-4 text-sm text-foreground transition-colors hover:text-primary">
-                            Browse events and manage lifecycle
-                        </Link>
-                        <Link href="/portal/access" className="panel-soft rounded-3xl px-4 py-4 text-sm text-foreground transition-colors hover:text-primary">
-                            Open registrar access hub
-                        </Link>
-                        <Link href="/portal/audit" className="panel-soft rounded-3xl px-4 py-4 text-sm text-foreground transition-colors hover:text-primary">
-                            Review audit activity
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Audit activity</div>
+                            <h3 className="mt-2 text-2xl font-bold tracking-tight text-foreground">Recent changes</h3>
+                        </div>
+                        <Link href="/portal/audit" className="rounded-full border border-border px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:text-foreground">
+                            View full audit logs
                         </Link>
                     </div>
+
+                    {auditLogs.length === 0 ? (
+                        <div className="mt-5 rounded-2xl border border-dashed border-border bg-background/60 px-4 py-5 text-sm text-muted-foreground">
+                            No audit activity yet.
+                        </div>
+                    ) : (
+                        <div className="mt-5 grid gap-3">
+                            {auditLogs.map((log) => {
+                                const eventName = log.event_id ? eventNameById.get(log.event_id) : null
+                                return (
+                                    <article key={log.id} className="rounded-2xl border border-border bg-background/60 px-4 py-3">
+                                        <div className="text-sm font-semibold text-foreground">{formatAuditAction(log.action)}</div>
+                                        <div className="mt-1 text-xs text-muted-foreground">
+                                            {eventName ? eventName : log.event_id ? `Event: ${log.event_id.slice(0, 8)}...` : 'Global action'}
+                                        </div>
+                                        <div className="mt-1 text-xs text-muted-foreground">
+                                            {new Date(log.created_at).toLocaleString('en-IN')}
+                                        </div>
+                                    </article>
+                                )
+                            })}
+                        </div>
+                    )}
                 </aside>
             </section>
         </div>
