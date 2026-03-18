@@ -432,7 +432,7 @@ export default async function PortalEventAccessPage({ params, searchParams }: Po
                 <div className="flex flex-wrap items-start justify-between gap-4">
                     <div className="max-w-3xl">
                         <div className="inline-flex rounded-full border border-border/70 bg-background/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground backdrop-blur-sm">
-                            Phase 5 · Access control
+                            Access control
                         </div>
                         <h2 className="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">{event.name}</h2>
                         <p className="mt-3 text-sm leading-7 text-muted-foreground sm:text-base">

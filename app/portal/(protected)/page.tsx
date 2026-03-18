@@ -42,7 +42,7 @@ export default async function PortalDashboardPage() {
             redirect(`/portal/events/${liveAssignments[0].eventId}/results`)
         }
 
-        // Multiple live assignments — show picker (unusual v1 case)
+        // Multiple live assignments — show picker
         if (liveAssignments.length > 1) {
             return (
                 <section className="panel p-6 sm:p-8">
@@ -146,21 +146,8 @@ export default async function PortalDashboardPage() {
                             Manage events from one internal workspace
                         </h2>
                         <p className="mt-3 text-sm leading-7 text-muted-foreground sm:text-base">
-                            Welcome back, {profile.full_name || profile.email}. This shell is now reserved for super admins and shows the current event surface, status visibility, and the next management entry points.
+                            Welcome back, {profile.full_name || profile.email}. Use this dashboard to monitor event status, access operations, and audit visibility from one place.
                         </p>
-                    </div>
-
-                    <div className="grid min-w-[240px] gap-3 text-sm text-muted-foreground sm:grid-cols-2">
-                        <div className="surface-strong rounded-3xl px-4 py-4">
-                            <div className="text-[11px] font-semibold uppercase tracking-[0.14em]">Portal phase</div>
-                            <div className="mt-3 text-2xl font-bold tracking-tight text-foreground">Phase 3</div>
-                            <div className="mt-1">Admin shell and role-gated event listing</div>
-                        </div>
-                        <div className="panel-soft rounded-3xl px-4 py-4">
-                            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground">Next build surface</div>
-                            <div className="mt-3 text-lg font-bold tracking-tight text-foreground">Event CRUD</div>
-                            <div className="mt-1">Create, edit, archive, and lock flows</div>
-                        </div>
                     </div>
                 </div>
             </section>
@@ -202,11 +189,11 @@ export default async function PortalDashboardPage() {
 
                     {error ? (
                         <div className="mt-5 rounded-3xl border border-border/70 bg-background/70 px-4 py-4 text-sm text-muted-foreground">
-                            Event data could not be loaded. Check the Phase 1 migration and portal database connection.
+                            Event data could not be loaded. Check your database connection and try again.
                         </div>
                     ) : latestEvents.length === 0 ? (
                         <div className="mt-5 rounded-3xl border border-dashed border-border bg-background/60 px-5 py-6 text-sm text-muted-foreground">
-                            No events exist yet. The admin shell is ready; event creation is scheduled for the next phase.
+                            No events exist yet. Create your first event to begin registrar access, imports, and results operations.
                         </div>
                     ) : (
                         <div className="mt-5 grid gap-3">
@@ -245,17 +232,17 @@ export default async function PortalDashboardPage() {
 
                 <aside className="panel p-6 sm:p-7">
                     <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Navigation</div>
-                    <h3 className="mt-2 text-2xl font-bold tracking-tight text-foreground">Next admin areas</h3>
+                    <h3 className="mt-2 text-2xl font-bold tracking-tight text-foreground">Operations</h3>
                     <div className="mt-5 grid gap-3">
                         <Link href="/portal/events" className="panel-soft rounded-3xl px-4 py-4 text-sm text-foreground transition-colors hover:text-primary">
-                            Browse events and monitor state
+                            Browse events and manage lifecycle
                         </Link>
-                        <div className="rounded-3xl border border-dashed border-border px-4 py-4 text-sm text-muted-foreground">
-                            Access control will be connected in Phase 5.
-                        </div>
-                        <div className="rounded-3xl border border-dashed border-border px-4 py-4 text-sm text-muted-foreground">
-                            Audit review surfaces will arrive in Phase 10.
-                        </div>
+                        <Link href="/portal/access" className="panel-soft rounded-3xl px-4 py-4 text-sm text-foreground transition-colors hover:text-primary">
+                            Open registrar access hub
+                        </Link>
+                        <Link href="/portal/audit" className="panel-soft rounded-3xl px-4 py-4 text-sm text-foreground transition-colors hover:text-primary">
+                            Review audit activity
+                        </Link>
                     </div>
                 </aside>
             </section>

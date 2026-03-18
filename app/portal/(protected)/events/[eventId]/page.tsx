@@ -343,11 +343,11 @@ export default async function PortalEventDetailPage({ params, searchParams }: Po
                 <div className="flex flex-wrap items-start justify-between gap-4">
                     <div className="max-w-3xl">
                         <div className="inline-flex rounded-full border border-border/70 bg-background/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground backdrop-blur-sm">
-                            Phase 4 · Event detail
+                            Event detail
                         </div>
                         <h2 className="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">{event.name}</h2>
                         <p className="mt-3 text-sm leading-7 text-muted-foreground sm:text-base">
-                            Manage event metadata and workflow status. Access, import, and result tabs are linked below for upcoming phases.
+                            Manage event metadata and workflow status. Use the tabs below for registrar access, imports, and results operations.
                         </p>
                     </div>
 
@@ -458,7 +458,7 @@ export default async function PortalEventDetailPage({ params, searchParams }: Po
                                     ? 'Type LOCK to confirm finalizing results.'
                                     : isError('unlock_confirm_required')
                                         ? 'Type UNLOCK to confirm reopening result edits.'
-                                        : 'Result lock toggle failed. Please retry.'}
+                                        : 'Result lock toggle failed. Please try again.'}
                             </div>
                         ) : null}
 
