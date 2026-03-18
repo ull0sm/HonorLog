@@ -49,6 +49,18 @@ type EventCategory = {
     name: string
 }
 
+function isParsedParticipantPayload(value: unknown): value is ParsedParticipant {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+    const row = value as Record<string, unknown>
+
+    const name = row.participantName
+    const category = row.category
+    if (typeof name !== 'string' || name.trim() === '') return false
+    if (typeof category !== 'string' || category.trim() === '') return false
+
+    return true
+}
+
 function normalizeText(value: unknown): string {
     if (typeof value !== 'string') return ''
     return value.trim()
@@ -641,7 +653,11 @@ async function confirmImportAction(formData: FormData) {
     }
 
     const inserts = previewRows.map((row) => {
-        const payload = row.payload as unknown as ParsedParticipant
+        const payload = row.payload
+        if (!isParsedParticipantPayload(payload)) {
+            return null
+        }
+
         const categoryId = categoryMap.get(toLowerKey(payload.category)) ?? null
         return {
             event_id: eventId,
@@ -656,12 +672,18 @@ async function confirmImportAction(formData: FormData) {
         }
     })
 
-    const hasMissingCategory = inserts.some((row) => !row.category_id)
+    if (inserts.some((row) => row === null)) {
+        redirect(buildImportRedirect(eventId, { batchId, error: 'malformed_rows' }))
+    }
+
+    const normalizedInserts = inserts.filter((row): row is NonNullable<typeof row> => !!row)
+
+    const hasMissingCategory = normalizedInserts.some((row) => !row.category_id)
     if (hasMissingCategory) {
         redirect(buildImportRedirect(eventId, { batchId, error: 'stale_preview' }))
     }
 
-    const { error: insertError } = await supabase.from('event_registrations').insert(inserts)
+    const { error: insertError } = await supabase.from('event_registrations').insert(normalizedInserts)
 
     if (insertError) {
         redirect(buildImportRedirect(eventId, { batchId, error: 'confirm_failed' }))
@@ -688,7 +710,7 @@ async function confirmImportAction(formData: FormData) {
         entityId: batchId,
         eventId,
         afterState: {
-            imported_rows: inserts.length,
+            imported_rows: normalizedInserts.length,
             status: 'confirmed',
         },
     })
@@ -804,6 +826,7 @@ export default async function PortalEventImportPage({ params, searchParams }: Po
         confirm_required: 'Tick the confirmation checkbox before importing.',
         repeated_confirm: 'This batch was already imported. Re-confirm is blocked.',
         stale_preview: 'The preview is stale or unavailable. Re-upload the file to refresh validation.',
+        malformed_rows: 'Some preview rows are malformed. Re-upload the file and validate again.',
         blocking_rows: 'Import blocked: resolve duplicate/error rows before confirmation.',
         confirm_failed: 'Import confirmation failed. No changes were finalized.',
     }
@@ -938,7 +961,7 @@ export default async function PortalEventImportPage({ params, searchParams }: Po
 
                 {!batch ? (
                     <div className="mt-5 rounded-3xl border border-dashed border-border bg-background/60 px-5 py-6 text-sm text-muted-foreground">
-                        Upload a JSON file to generate a persisted preview batch with row-level validation status.
+                        Upload a JSON or Excel file to generate a persisted preview batch with row-level validation status.
                     </div>
                 ) : (
                     <>

@@ -9,31 +9,39 @@ export default function PortalLoginForm() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [authError, setAuthError] = useState<string | null>(null)
 
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault()
 
         if (!email.trim() || !password) {
+            setAuthError('Email and password are required.')
             return
         }
 
+        setAuthError(null)
         setIsSubmitting(true)
 
-        const supabase = createBrowserSupabaseClient()
-        const { error } = await supabase.auth.signInWithPassword({
-            email: email.trim(),
-            password,
-        })
+        try {
+            const supabase = createBrowserSupabaseClient()
+            const { error } = await supabase.auth.signInWithPassword({
+                email: email.trim(),
+                password,
+            })
 
-        if (error) {
-            router.replace('/portal/login?error=invalid_credentials')
+            if (error) {
+                router.replace('/portal/login?error=invalid_credentials')
+                router.refresh()
+                return
+            }
+
+            router.replace('/portal')
             router.refresh()
+        } catch {
+            setAuthError('Could not reach the authentication service. Check your connection and try again.')
+        } finally {
             setIsSubmitting(false)
-            return
         }
-
-        router.replace('/portal')
-        router.refresh()
     }
 
     return (
@@ -48,7 +56,10 @@ export default function PortalLoginForm() {
                     required
                     autoComplete="email"
                     value={email}
-                    onChange={(event) => setEmail(event.target.value)}
+                    onChange={(event) => {
+                        setEmail(event.target.value)
+                        if (authError) setAuthError(null)
+                    }}
                     placeholder="staff@example.com"
                     className="w-full rounded-2xl border border-border bg-background/70 px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground/55"
                 />
@@ -63,11 +74,20 @@ export default function PortalLoginForm() {
                     required
                     autoComplete="current-password"
                     value={password}
-                    onChange={(event) => setPassword(event.target.value)}
+                    onChange={(event) => {
+                        setPassword(event.target.value)
+                        if (authError) setAuthError(null)
+                    }}
                     placeholder="Enter your password"
                     className="w-full rounded-2xl border border-border bg-background/70 px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground/55"
                 />
             </label>
+
+            {authError ? (
+                <div className="rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-700 dark:text-rose-300">
+                    {authError}
+                </div>
+            ) : null}
 
             <button
                 type="submit"
