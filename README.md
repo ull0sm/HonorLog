@@ -75,6 +75,9 @@ In Supabase Authentication settings:
 
 - Set the Site URL to your production app URL.
 - Add Redirect URLs used by portal login/logout flows.
+- Include password recovery URLs:
+    - `/portal/forgot-password`
+    - `/portal/reset-password`
 - Keep email/password auth enabled for staff login.
 
 ### Database and migration requirements

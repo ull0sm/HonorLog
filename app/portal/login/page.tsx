@@ -30,6 +30,10 @@ function getReasonMessage(reason?: string, error?: string) {
         return 'You have been signed out successfully.'
     }
 
+    if (reason === 'password_updated') {
+        return 'Your password has been updated. Sign in with your new password.'
+    }
+
     return null
 }
 
