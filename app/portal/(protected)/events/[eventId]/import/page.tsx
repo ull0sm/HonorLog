@@ -1008,41 +1008,45 @@ export default async function PortalEventImportPage({ params, searchParams }: Po
                     </div>
                 ) : (
                     <div className="mt-5 overflow-hidden rounded-3xl border border-border/70">
-                        <div className="grid grid-cols-[84px_minmax(0,1.1fr)_minmax(0,0.9fr)_minmax(0,1.4fr)] gap-4 border-b border-border/70 bg-background/60 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                            <div>Row</div>
-                            <div>Participant</div>
-                            <div>Status</div>
-                            <div>Messages</div>
-                        </div>
-                        <div className="divide-y divide-border/70">
-                            {previewRows.map((row) => (
-                                <div key={row.id} className="grid grid-cols-1 gap-3 px-4 py-4 md:grid-cols-[84px_minmax(0,1.1fr)_minmax(0,0.9fr)_minmax(0,1.4fr)]">
-                                    <div className="text-sm font-semibold text-foreground">#{row.row_index}</div>
-                                    <div>
-                                        <div className="text-sm font-semibold text-foreground">{row.payload.participantName || '(missing name)'}</div>
-                                        <div className="mt-1 text-xs text-muted-foreground">
-                                            {row.payload.category || '(missing category)'}
-                                            {row.payload.participantIdentifier ? ` · ${row.payload.participantIdentifier}` : ''}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] ${getStatusToneForPreview(row.validation_status)}`}>
-                                            {row.validation_status}
-                                        </span>
-                                    </div>
-                                    <div className="text-xs text-muted-foreground">
-                                        {row.messages.length === 0 ? (
-                                            <span>Ready</span>
-                                        ) : (
-                                            <ul className="space-y-1">
-                                                {row.messages.map((message, idx) => (
-                                                    <li key={`${row.id}-${idx}`}>• {message}</li>
-                                                ))}
-                                            </ul>
-                                        )}
-                                    </div>
+                        <div className="overflow-x-auto">
+                            <div className="min-w-[760px]">
+                                <div className="grid grid-cols-[84px_minmax(0,1.1fr)_minmax(0,0.9fr)_minmax(0,1.4fr)] gap-4 border-b border-border/70 bg-background/60 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                                    <div>Row</div>
+                                    <div>Participant</div>
+                                    <div>Status</div>
+                                    <div>Messages</div>
                                 </div>
-                            ))}
+                                <div className="divide-y divide-border/70">
+                                    {previewRows.map((row) => (
+                                        <div key={row.id} className="grid grid-cols-[84px_minmax(0,1.1fr)_minmax(0,0.9fr)_minmax(0,1.4fr)] gap-4 px-4 py-4">
+                                            <div className="text-sm font-semibold text-foreground">#{row.row_index}</div>
+                                            <div>
+                                                <div className="text-sm font-semibold text-foreground">{row.payload.participantName || '(missing name)'}</div>
+                                                <div className="mt-1 text-xs text-muted-foreground">
+                                                    {row.payload.category || '(missing category)'}
+                                                    {row.payload.participantIdentifier ? ` · ${row.payload.participantIdentifier}` : ''}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] ${getStatusToneForPreview(row.validation_status)}`}>
+                                                    {row.validation_status}
+                                                </span>
+                                            </div>
+                                            <div className="text-xs text-muted-foreground">
+                                                {row.messages.length === 0 ? (
+                                                    <span>Ready</span>
+                                                ) : (
+                                                    <ul className="space-y-1">
+                                                        {row.messages.map((message, idx) => (
+                                                            <li key={`${row.id}-${idx}`}>• {message}</li>
+                                                        ))}
+                                                    </ul>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
