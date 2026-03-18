@@ -6,6 +6,7 @@ import {
     isSuperAdmin,
     requirePortalSession,
 } from '@/lib/portal/auth'
+import { writeAuditLogSafe } from '@/lib/portal/audit'
 
 const EVENT_STATUSES = ['draft', 'active', 'completed', 'locked', 'archived'] as const
 
@@ -103,7 +104,7 @@ async function updateEventAction(formData: FormData) {
 
     const { data: existing } = await supabase
         .from('events')
-        .select('id, status')
+        .select('id, name, location, date, description, slug, status, results_locked')
         .eq('id', eventId)
         .maybeSingle()
 
@@ -139,6 +140,33 @@ async function updateEventAction(formData: FormData) {
         redirect(buildDetailRedirect(eventId, { ...persistable, error: 'save_failed' }))
     }
 
+    await writeAuditLogSafe(supabase, {
+        actorUserId: profile.id,
+        action: 'event_updated',
+        entityType: 'event',
+        entityId: eventId,
+        eventId,
+        beforeState: {
+            name: existing.name,
+            location: existing.location,
+            date: existing.date,
+            description: existing.description,
+            slug: existing.slug,
+            status: existing.status,
+            results_locked: existing.results_locked,
+        },
+        afterState: {
+            name,
+            location,
+            date,
+            description: description || null,
+            slug: slug || null,
+            status,
+            results_locked: existing.results_locked,
+        },
+    })
+
+    revalidatePath('/portal/audit')
     revalidatePath('/portal')
     revalidatePath('/portal/events')
     revalidatePath(`/portal/events/${eventId}`)
@@ -185,9 +213,87 @@ async function deleteEventAction(formData: FormData) {
         redirect(buildDetailRedirect(eventId, { error: 'delete_failed' }))
     }
 
+    await writeAuditLogSafe(supabase, {
+        actorUserId: profile.id,
+        action: 'event_deleted',
+        entityType: 'event',
+        entityId: eventId,
+        eventId,
+        beforeState: {
+            id: existing.id,
+            name: existing.name,
+            status: existing.status,
+        },
+    })
+
+    revalidatePath('/portal/audit')
+
     revalidatePath('/portal')
     revalidatePath('/portal/events')
     redirect('/portal/events?deleted=1')
+}
+
+async function toggleResultsLockAction(formData: FormData) {
+    'use server'
+
+    const { supabase, profile } = await requirePortalSession()
+
+    if (!isSuperAdmin(profile)) {
+        redirect('/portal')
+    }
+
+    const eventId = String(formData.get('eventId') ?? '').trim()
+    const expected = String(formData.get('expected') ?? '').trim()
+    const confirmation = String(formData.get('confirmation') ?? '').trim().toUpperCase()
+
+    if (!eventId) {
+        redirect('/portal/events')
+    }
+
+    const { data: existing } = await supabase
+        .from('events')
+        .select('id, name, status, results_locked')
+        .eq('id', eventId)
+        .maybeSingle<{ id: string; name: string; status: string; results_locked: boolean }>()
+
+    if (!existing) {
+        redirect('/portal/events')
+    }
+
+    const targetLock = expected === 'lock'
+
+    if (targetLock && confirmation !== 'LOCK') {
+        redirect(buildDetailRedirect(eventId, { error: 'lock_confirm_required' }))
+    }
+
+    if (!targetLock && confirmation !== 'UNLOCK') {
+        redirect(buildDetailRedirect(eventId, { error: 'unlock_confirm_required' }))
+    }
+
+    const { error } = await supabase
+        .from('events')
+        .update({ results_locked: targetLock })
+        .eq('id', eventId)
+
+    if (error) {
+        redirect(buildDetailRedirect(eventId, { error: 'lock_toggle_failed' }))
+    }
+
+    await writeAuditLogSafe(supabase, {
+        actorUserId: profile.id,
+        action: 'results_lock_toggled',
+        entityType: 'event',
+        entityId: eventId,
+        eventId,
+        beforeState: { results_locked: existing.results_locked },
+        afterState: { results_locked: targetLock },
+    })
+
+    revalidatePath('/portal/events')
+    revalidatePath(`/portal/events/${eventId}`)
+    revalidatePath(`/portal/events/${eventId}/results`)
+    revalidatePath('/portal/audit')
+    redirect(buildDetailRedirect(eventId, { success: targetLock ? 'locked_results' : 'unlocked_results' }))
 }
 
 type PortalEventDetailPageProps = {
@@ -346,6 +452,16 @@ export default async function PortalEventDetailPage({ params, searchParams }: Po
                             </div>
                         ) : null}
 
+                        {(isError('lock_confirm_required') || isError('unlock_confirm_required') || isError('lock_toggle_failed')) ? (
+                            <div className="rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-700 dark:text-rose-300">
+                                {isError('lock_confirm_required')
+                                    ? 'Type LOCK to confirm finalizing results.'
+                                    : isError('unlock_confirm_required')
+                                        ? 'Type UNLOCK to confirm reopening result edits.'
+                                        : 'Result lock toggle failed. Please retry.'}
+                            </div>
+                        ) : null}
+
                         {query?.saved ? (
                             <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-300">
                                 Event updated successfully.
@@ -355,6 +471,14 @@ export default async function PortalEventDetailPage({ params, searchParams }: Po
                         {query?.created ? (
                             <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-300">
                                 Event created successfully.
+                            </div>
+                        ) : null}
+
+                        {(query?.success === 'locked_results' || query?.success === 'unlocked_results') ? (
+                            <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-300">
+                                {query?.success === 'locked_results'
+                                    ? 'Results are now locked. Registrar edits are blocked.'
+                                    : 'Results are now unlocked. Registrar edits are allowed again.'}
                             </div>
                         ) : null}
 
@@ -370,37 +494,71 @@ export default async function PortalEventDetailPage({ params, searchParams }: Po
                 </form>
 
                 <aside className="panel p-6 sm:p-8">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Danger zone</div>
-                    <h3 className="mt-2 text-2xl font-bold tracking-tight text-foreground">Delete event</h3>
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Result lock control</div>
+                    <h3 className="mt-2 text-2xl font-bold tracking-tight text-foreground">
+                        {event.results_locked ? 'Unlock result entry' : 'Lock result entry'}
+                    </h3>
                     <p className="mt-3 text-sm leading-7 text-muted-foreground">
-                        Deleting an event is destructive and removes dependent records through database cascades. Locked events cannot be deleted.
+                        {event.results_locked
+                            ? 'Unlocking allows registrar users to resume editing placements and medals for this event.'
+                            : 'Locking finalizes event results and prevents further registrar edits. Use once review is complete.'}
                     </p>
 
-                    <form action={deleteEventAction} className="mt-5 grid gap-4">
+                    <form action={toggleResultsLockAction} className="mt-5 grid gap-4 border-b border-border/60 pb-6">
                         <input type="hidden" name="eventId" value={event.id} />
+                        <input type="hidden" name="expected" value={event.results_locked ? 'unlock' : 'lock'} />
                         <label className="block">
-                            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-foreground">Type event name to confirm</span>
+                            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-foreground">
+                                Type {event.results_locked ? 'UNLOCK' : 'LOCK'} to confirm
+                            </span>
                             <input
-                                name="confirmDelete"
+                                name="confirmation"
                                 className="w-full rounded-2xl border border-border bg-background/70 px-4 py-3 text-sm text-foreground outline-none"
-                                placeholder={event.name}
+                                placeholder={event.results_locked ? 'UNLOCK' : 'LOCK'}
                             />
                         </label>
-
-                        {(isError('delete_confirm_required') || isError('locked_delete_blocked') || isError('delete_failed')) ? (
-                            <div className="rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-700 dark:text-rose-300">
-                                {isError('delete_confirm_required')
-                                    ? 'Type the exact event name to confirm deletion.'
-                                    : isError('locked_delete_blocked')
-                                        ? 'Locked events cannot be deleted.'
-                                        : 'Event deletion failed. Please try again.'}
-                            </div>
-                        ) : null}
-
-                        <button type="submit" className="rounded-full bg-rose-600 px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-white">
-                            Delete event
+                        <button
+                            type="submit"
+                            className={`rounded-full px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-white ${event.results_locked ? 'bg-amber-600' : 'bg-rose-600'
+                                }`}
+                        >
+                            {event.results_locked ? 'Unlock results' : 'Lock results'}
                         </button>
                     </form>
+
+                    <div className="pt-6">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Danger zone</div>
+                        <h3 className="mt-2 text-2xl font-bold tracking-tight text-foreground">Delete event</h3>
+                        <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                            Deleting an event is destructive and removes dependent records through database cascades. Locked events cannot be deleted.
+                        </p>
+
+                        <form action={deleteEventAction} className="mt-5 grid gap-4">
+                            <input type="hidden" name="eventId" value={event.id} />
+                            <label className="block">
+                                <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-foreground">Type event name to confirm</span>
+                                <input
+                                    name="confirmDelete"
+                                    className="w-full rounded-2xl border border-border bg-background/70 px-4 py-3 text-sm text-foreground outline-none"
+                                    placeholder={event.name}
+                                />
+                            </label>
+
+                            {(isError('delete_confirm_required') || isError('locked_delete_blocked') || isError('delete_failed')) ? (
+                                <div className="rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-700 dark:text-rose-300">
+                                    {isError('delete_confirm_required')
+                                        ? 'Type the exact event name to confirm deletion.'
+                                        : isError('locked_delete_blocked')
+                                            ? 'Locked events cannot be deleted.'
+                                            : 'Event deletion failed. Please try again.'}
+                                </div>
+                            ) : null}
+
+                            <button type="submit" className="rounded-full bg-rose-600 px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-white">
+                                Delete event
+                            </button>
+                        </form>
+                    </div>
                 </aside>
             </div>
         </section>

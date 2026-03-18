@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { isSuperAdmin, requirePortalSession } from '@/lib/portal/auth'
+import { writeAuditLogSafe } from '@/lib/portal/audit'
 
 const EVENT_STATUSES = ['draft', 'active', 'completed', 'locked', 'archived'] as const
 
@@ -97,6 +98,23 @@ async function createEventAction(formData: FormData) {
         redirect(buildCreateRedirect({ ...persistable, error: 'save_failed' }))
     }
 
+    await writeAuditLogSafe(supabase, {
+        actorUserId: profile.id,
+        action: 'event_created',
+        entityType: 'event',
+        entityId: data.id,
+        eventId: data.id,
+        afterState: {
+            id: data.id,
+            name,
+            location,
+            date,
+            status,
+            slug: slug || null,
+        },
+    })
+
+    revalidatePath('/portal/audit')
     revalidatePath('/portal')
     revalidatePath('/portal/events')
     redirect(`/portal/events/${data.id}?created=1`)
