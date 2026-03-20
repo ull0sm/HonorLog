@@ -38,9 +38,9 @@ export default async function PortalProtectedLayout({
                                 <Link href="/portal/access" className="rounded-full border border-border px-3 py-1.5 transition-colors hover:text-foreground">
                                     Access
                                 </Link>
-                                <span className="rounded-full border border-dashed border-border px-3 py-1.5 text-muted-foreground/80">
+                                <Link href="/portal/audit" className="rounded-full border border-border px-3 py-1.5 transition-colors hover:text-foreground">
                                     Audit
-                                </span>
+                                </Link>
                             </>
                         ) : isRegistrar ? (
                             <Link href="/portal" className="rounded-full border border-border px-3 py-1.5 transition-colors hover:text-foreground">
