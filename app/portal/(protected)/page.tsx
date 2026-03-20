@@ -26,6 +26,14 @@ function getStatusTone(status: string) {
     return 'bg-amber-500/15 text-amber-700 dark:text-amber-300'
 }
 
+function formatAuditAction(action: string) {
+    return action
+        .split('_')
+        .filter(Boolean)
+        .map((part) => part[0].toUpperCase() + part.slice(1))
+        .join(' ')
+}
+
 export default async function PortalDashboardPage() {
     const { supabase, profile } = await requirePortalSession()
 
@@ -42,7 +50,7 @@ export default async function PortalDashboardPage() {
             redirect(`/portal/events/${liveAssignments[0].eventId}/results`)
         }
 
-        // Multiple live assignments — show picker (unusual v1 case)
+        // Multiple live assignments — show picker
         if (liveAssignments.length > 1) {
             return (
                 <section className="panel p-6 sm:p-8">
@@ -115,7 +123,7 @@ export default async function PortalDashboardPage() {
                 </h2>
                 <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
                     {hasDisabled
-                        ? 'A super admin has disabled your access to this event. Contact your event administrator for assistance.'
+                        ? 'A super admin has disabled your access to this event. Contact a super admin for assistance.'
                         : 'Your account is set up but has not been assigned to an event yet. A super admin needs to create your event access before you can enter results.'}
                 </p>
             </section>
@@ -134,37 +142,17 @@ export default async function PortalDashboardPage() {
     const archivedEvents = eventRows.filter((event) => event.status === 'archived').length
     const latestEvents = eventRows.slice(0, 4)
 
+    const { data: rawAuditLogs } = await supabase
+        .from('audit_logs')
+        .select('id, action, event_id, created_at')
+        .order('created_at', { ascending: false })
+        .limit(5)
+
+    const auditLogs = rawAuditLogs ?? []
+    const eventNameById = new Map(eventRows.map((event) => [event.id, event.name]))
+
     return (
         <div className="space-y-6">
-            <section className="panel p-6 sm:p-8">
-                <div className="flex flex-wrap items-start justify-between gap-5">
-                    <div className="max-w-2xl">
-                        <div className="inline-flex rounded-full border border-border/70 bg-background/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground backdrop-blur-sm">
-                            Super admin dashboard
-                        </div>
-                        <h2 className="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                            Manage events from one internal workspace
-                        </h2>
-                        <p className="mt-3 text-sm leading-7 text-muted-foreground sm:text-base">
-                            Welcome back, {profile.full_name || profile.email}. This shell is now reserved for super admins and shows the current event surface, status visibility, and the next management entry points.
-                        </p>
-                    </div>
-
-                    <div className="grid min-w-[240px] gap-3 text-sm text-muted-foreground sm:grid-cols-2">
-                        <div className="surface-strong rounded-3xl px-4 py-4">
-                            <div className="text-[11px] font-semibold uppercase tracking-[0.14em]">Portal phase</div>
-                            <div className="mt-3 text-2xl font-bold tracking-tight text-foreground">Phase 3</div>
-                            <div className="mt-1">Admin shell and role-gated event listing</div>
-                        </div>
-                        <div className="panel-soft rounded-3xl px-4 py-4">
-                            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground">Next build surface</div>
-                            <div className="mt-3 text-lg font-bold tracking-tight text-foreground">Event CRUD</div>
-                            <div className="mt-1">Create, edit, archive, and lock flows</div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
             <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <article className="panel px-5 py-5">
                     <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Total events</div>
@@ -202,11 +190,11 @@ export default async function PortalDashboardPage() {
 
                     {error ? (
                         <div className="mt-5 rounded-3xl border border-border/70 bg-background/70 px-4 py-4 text-sm text-muted-foreground">
-                            Event data could not be loaded. Check the Phase 1 migration and portal database connection.
+                            Event data could not be loaded. Check your database connection and try again.
                         </div>
                     ) : latestEvents.length === 0 ? (
                         <div className="mt-5 rounded-3xl border border-dashed border-border bg-background/60 px-5 py-6 text-sm text-muted-foreground">
-                            No events exist yet. The admin shell is ready; event creation is scheduled for the next phase.
+                            No events exist yet. Create your first event to begin registrar access, imports, and results operations.
                         </div>
                     ) : (
                         <div className="mt-5 grid gap-3">
@@ -244,19 +232,38 @@ export default async function PortalDashboardPage() {
                 </div>
 
                 <aside className="panel p-6 sm:p-7">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Navigation</div>
-                    <h3 className="mt-2 text-2xl font-bold tracking-tight text-foreground">Next admin areas</h3>
-                    <div className="mt-5 grid gap-3">
-                        <Link href="/portal/events" className="panel-soft rounded-3xl px-4 py-4 text-sm text-foreground transition-colors hover:text-primary">
-                            Browse events and monitor state
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Audit activity</div>
+                            <h3 className="mt-2 text-2xl font-bold tracking-tight text-foreground">Recent changes</h3>
+                        </div>
+                        <Link href="/portal/audit" className="rounded-full border border-border px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:text-foreground">
+                            View full audit logs
                         </Link>
-                        <div className="rounded-3xl border border-dashed border-border px-4 py-4 text-sm text-muted-foreground">
-                            Access control will be connected in Phase 5.
-                        </div>
-                        <div className="rounded-3xl border border-dashed border-border px-4 py-4 text-sm text-muted-foreground">
-                            Audit review surfaces will arrive in Phase 10.
-                        </div>
                     </div>
+
+                    {auditLogs.length === 0 ? (
+                        <div className="mt-5 rounded-2xl border border-dashed border-border bg-background/60 px-4 py-5 text-sm text-muted-foreground">
+                            No audit activity yet.
+                        </div>
+                    ) : (
+                        <div className="mt-5 grid gap-3">
+                            {auditLogs.map((log) => {
+                                const eventName = log.event_id ? eventNameById.get(log.event_id) : null
+                                return (
+                                    <article key={log.id} className="rounded-2xl border border-border bg-background/60 px-4 py-3">
+                                        <div className="text-sm font-semibold text-foreground">{formatAuditAction(log.action)}</div>
+                                        <div className="mt-1 text-xs text-muted-foreground">
+                                            {eventName ? eventName : log.event_id ? `Event: ${log.event_id.slice(0, 8)}...` : 'Global action'}
+                                        </div>
+                                        <div className="mt-1 text-xs text-muted-foreground">
+                                            {new Date(log.created_at).toLocaleString('en-IN')}
+                                        </div>
+                                    </article>
+                                )
+                            })}
+                        </div>
+                    )}
                 </aside>
             </section>
         </div>

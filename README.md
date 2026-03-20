@@ -50,6 +50,59 @@ This is an open source project. We welcome the community to review the code and 
     ```
     Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Internal Portal Deployment Notes (Phase 11)
+
+These notes are for deploying the `/portal` admin/registrar workflows safely.
+
+### Required environment variables
+
+Set all of the following in your deployment environment:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+```
+
+Important:
+
+- `SUPABASE_SERVICE_ROLE_KEY` is server-only and must never be exposed via `NEXT_PUBLIC_*`.
+- Portal registrar creation and password reset require the service-role key.
+
+### Supabase auth configuration
+
+In Supabase Authentication settings:
+
+- Set the Site URL to your production app URL.
+- Add Redirect URLs used by portal login/logout flows.
+- Include password recovery URLs:
+    - `/portal/forgot-password`
+    - `/portal/reset-password`
+- Keep email/password auth enabled for staff login.
+
+### Database and migration requirements
+
+Before enabling portal users in production:
+
+- Apply `migrations/001_phase1_portal_schema.sql`.
+- Verify portal tables exist (`profiles`, `event_access`, `event_import_*`, `event_categories`, `event_registrations`, `event_results`, `audit_logs`).
+- Ensure at least one active `super_admin` profile row exists.
+
+### Storage assumptions
+
+Current portal import flow parses uploads in-memory and writes normalized preview rows to DB tables.
+
+- No Supabase Storage bucket is required for current JSON/XLSX import behavior.
+- If you later persist uploaded files, create a private bucket and update server actions accordingly.
+
+### Operational checks before go-live
+
+- Confirm `npm run build` succeeds in production mode.
+- Verify `/portal/login` works for both super admin and registrar accounts.
+- Verify registrar cannot access unrelated event URLs.
+- Verify lock/unlock controls and audit log page (`/portal/audit`) work for super admin.
+- Verify locked events reject result edits from stale registrar tabs.
+
 ## Contact
 
 For inquiries regarding the project or the karate school, please contact us:

@@ -1067,3 +1067,63 @@ All null-returns replaced with redirects. Import page upgraded from bare scaffol
 
 - Phase 11: QA, resilience checks, and production-readiness pass.
 
+---
+
+## Change Set 14: Phase 11 - Final QA and Production Readiness
+
+**Date:** 2026-03-18
+**Prompt:** Prompt 12 - Final QA and production-readiness pass
+**Branch:** main
+
+### Commits
+
+- `224c888` - Improve login and import failure handling
+- `6b3da5b` - Add portal deployment runbook and improve mobile import preview
+
+### Modified Files
+
+- `app/portal/login/PortalLoginForm.tsx`
+- `app/portal/(protected)/events/[eventId]/import/page.tsx`
+- `README.md`
+
+### What Was Built
+
+#### Login resilience hardening
+
+- Added explicit login submit error handling for auth/network failures.
+- Added empty-field validation and loading-state-safe submit flow.
+- Added inline feedback that resets when the user updates email or password.
+
+#### Import confirm safety hardening
+
+- Added strict persisted-row payload shape validation before confirm insert.
+- Added malformed preview payload handling path (`malformed_rows`) so bad staged rows cannot be imported.
+- Updated import-step copy to consistently reflect JSON and Excel support.
+
+#### Mobile import preview usability
+
+- Updated preview table container to support horizontal scrolling on narrow screens.
+- Prevented clipped columns in Step 3 preview when viewing from phones/small tablets.
+
+#### Deployment runbook documentation
+
+- Added internal portal deployment notes in `README.md` covering:
+  - required Supabase env vars and service-role key handling
+  - auth site-url and redirect-url setup
+  - migration/table readiness checks
+  - current storage assumptions for import flow
+  - pre-go-live operational verification checklist
+
+### Edge Cases Covered
+
+- login auth service/network failure
+- missing email/password submit
+- malformed persisted import preview payloads
+- mobile viewport clipping in import preview table
+- deployment misconfiguration risk from missing env/auth setup notes
+
+### Validation
+
+- `npm run lint` passed
+- `npm run build` passed
+

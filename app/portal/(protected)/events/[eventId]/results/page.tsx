@@ -417,7 +417,7 @@ export default async function PortalEventResultsPage({ params, searchParams }: P
         duplicate_participant: 'This participant is already assigned to another placement in this category.',
         stale_edit: 'This result was modified from another tab/session. Refresh and try again.',
         locked: 'Results are locked for this event or category. Editing is disabled.',
-        save_failed: 'Could not save result. Please retry.',
+        save_failed: 'Could not save the result. Please try again.',
     }
 
     const successMessageMap: Record<string, string> = {

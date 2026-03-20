@@ -19,15 +19,19 @@ function getReasonMessage(reason?: string, error?: string) {
     }
 
     if (reason === 'no_profile') {
-        return 'Your account does not have a portal profile yet. Contact an administrator.'
+        return 'Your account does not have a portal profile yet. Contact a super admin.'
     }
 
     if (reason === 'inactive') {
-        return 'Your account is inactive. Contact an administrator.'
+        return 'Your account is inactive. Contact a super admin.'
     }
 
     if (reason === 'signed_out') {
         return 'You have been signed out successfully.'
+    }
+
+    if (reason === 'password_updated') {
+        return 'Your password has been updated. Sign in with your new password.'
     }
 
     return null
@@ -70,7 +74,7 @@ export default async function PortalLoginPage({ searchParams }: PortalLoginPageP
                         HonorLog operations access
                     </h1>
                     <p className="mt-4 max-w-xl text-sm leading-7 text-muted-foreground sm:text-base">
-                        This portal is reserved for staff workflows such as event administration, registrar access, controlled imports, and result entry. The public student directory remains separate and unchanged.
+                        This portal supports staff workflows such as event administration, registrar access, controlled imports, and result entry. The public student directory remains separate and unchanged.
                     </p>
                     <div className="mt-8 grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
                         <div className="panel-soft p-4">

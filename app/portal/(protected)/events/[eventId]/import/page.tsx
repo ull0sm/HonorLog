@@ -49,6 +49,18 @@ type EventCategory = {
     name: string
 }
 
+function isParsedParticipantPayload(value: unknown): value is ParsedParticipant {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+    const row = value as Record<string, unknown>
+
+    const name = row.participantName
+    const category = row.category
+    if (typeof name !== 'string' || name.trim() === '') return false
+    if (typeof category !== 'string' || category.trim() === '') return false
+
+    return true
+}
+
 function normalizeText(value: unknown): string {
     if (typeof value !== 'string') return ''
     return value.trim()
@@ -641,7 +653,11 @@ async function confirmImportAction(formData: FormData) {
     }
 
     const inserts = previewRows.map((row) => {
-        const payload = row.payload as unknown as ParsedParticipant
+        const payload = row.payload
+        if (!isParsedParticipantPayload(payload)) {
+            return null
+        }
+
         const categoryId = categoryMap.get(toLowerKey(payload.category)) ?? null
         return {
             event_id: eventId,
@@ -656,12 +672,18 @@ async function confirmImportAction(formData: FormData) {
         }
     })
 
-    const hasMissingCategory = inserts.some((row) => !row.category_id)
+    if (inserts.some((row) => row === null)) {
+        redirect(buildImportRedirect(eventId, { batchId, error: 'malformed_rows' }))
+    }
+
+    const normalizedInserts = inserts.filter((row): row is NonNullable<typeof row> => !!row)
+
+    const hasMissingCategory = normalizedInserts.some((row) => !row.category_id)
     if (hasMissingCategory) {
         redirect(buildImportRedirect(eventId, { batchId, error: 'stale_preview' }))
     }
 
-    const { error: insertError } = await supabase.from('event_registrations').insert(inserts)
+    const { error: insertError } = await supabase.from('event_registrations').insert(normalizedInserts)
 
     if (insertError) {
         redirect(buildImportRedirect(eventId, { batchId, error: 'confirm_failed' }))
@@ -688,7 +710,7 @@ async function confirmImportAction(formData: FormData) {
         entityId: batchId,
         eventId,
         afterState: {
-            imported_rows: inserts.length,
+            imported_rows: normalizedInserts.length,
             status: 'confirmed',
         },
     })
@@ -800,10 +822,11 @@ export default async function PortalEventImportPage({ params, searchParams }: Po
         excel_parse_failed: query?.message || 'Could not read the Excel workbook.',
         parse_failed: query?.message || 'Could not parse the upload payload.',
         batch_create_failed: 'Could not create an import batch. Please try again.',
-        row_insert_failed: 'Preview rows could not be stored. Please retry upload.',
+        row_insert_failed: 'Preview rows could not be stored. Please upload again.',
         confirm_required: 'Tick the confirmation checkbox before importing.',
         repeated_confirm: 'This batch was already imported. Re-confirm is blocked.',
         stale_preview: 'The preview is stale or unavailable. Re-upload the file to refresh validation.',
+        malformed_rows: 'Some preview rows are malformed. Re-upload the file and validate again.',
         blocking_rows: 'Import blocked: resolve duplicate/error rows before confirmation.',
         confirm_failed: 'Import confirmation failed. No changes were finalized.',
     }
@@ -938,7 +961,7 @@ export default async function PortalEventImportPage({ params, searchParams }: Po
 
                 {!batch ? (
                     <div className="mt-5 rounded-3xl border border-dashed border-border bg-background/60 px-5 py-6 text-sm text-muted-foreground">
-                        Upload a JSON file to generate a persisted preview batch with row-level validation status.
+                        Upload a JSON or Excel file to generate a persisted preview batch with row-level validation status.
                     </div>
                 ) : (
                     <>
@@ -985,41 +1008,45 @@ export default async function PortalEventImportPage({ params, searchParams }: Po
                     </div>
                 ) : (
                     <div className="mt-5 overflow-hidden rounded-3xl border border-border/70">
-                        <div className="grid grid-cols-[84px_minmax(0,1.1fr)_minmax(0,0.9fr)_minmax(0,1.4fr)] gap-4 border-b border-border/70 bg-background/60 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                            <div>Row</div>
-                            <div>Participant</div>
-                            <div>Status</div>
-                            <div>Messages</div>
-                        </div>
-                        <div className="divide-y divide-border/70">
-                            {previewRows.map((row) => (
-                                <div key={row.id} className="grid grid-cols-1 gap-3 px-4 py-4 md:grid-cols-[84px_minmax(0,1.1fr)_minmax(0,0.9fr)_minmax(0,1.4fr)]">
-                                    <div className="text-sm font-semibold text-foreground">#{row.row_index}</div>
-                                    <div>
-                                        <div className="text-sm font-semibold text-foreground">{row.payload.participantName || '(missing name)'}</div>
-                                        <div className="mt-1 text-xs text-muted-foreground">
-                                            {row.payload.category || '(missing category)'}
-                                            {row.payload.participantIdentifier ? ` · ${row.payload.participantIdentifier}` : ''}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] ${getStatusToneForPreview(row.validation_status)}`}>
-                                            {row.validation_status}
-                                        </span>
-                                    </div>
-                                    <div className="text-xs text-muted-foreground">
-                                        {row.messages.length === 0 ? (
-                                            <span>Ready</span>
-                                        ) : (
-                                            <ul className="space-y-1">
-                                                {row.messages.map((message, idx) => (
-                                                    <li key={`${row.id}-${idx}`}>• {message}</li>
-                                                ))}
-                                            </ul>
-                                        )}
-                                    </div>
+                        <div className="overflow-x-auto">
+                            <div className="min-w-[760px]">
+                                <div className="grid grid-cols-[84px_minmax(0,1.1fr)_minmax(0,0.9fr)_minmax(0,1.4fr)] gap-4 border-b border-border/70 bg-background/60 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                                    <div>Row</div>
+                                    <div>Participant</div>
+                                    <div>Status</div>
+                                    <div>Messages</div>
                                 </div>
-                            ))}
+                                <div className="divide-y divide-border/70">
+                                    {previewRows.map((row) => (
+                                        <div key={row.id} className="grid grid-cols-[84px_minmax(0,1.1fr)_minmax(0,0.9fr)_minmax(0,1.4fr)] gap-4 px-4 py-4">
+                                            <div className="text-sm font-semibold text-foreground">#{row.row_index}</div>
+                                            <div>
+                                                <div className="text-sm font-semibold text-foreground">{row.payload.participantName || '(missing name)'}</div>
+                                                <div className="mt-1 text-xs text-muted-foreground">
+                                                    {row.payload.category || '(missing category)'}
+                                                    {row.payload.participantIdentifier ? ` · ${row.payload.participantIdentifier}` : ''}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] ${getStatusToneForPreview(row.validation_status)}`}>
+                                                    {row.validation_status}
+                                                </span>
+                                            </div>
+                                            <div className="text-xs text-muted-foreground">
+                                                {row.messages.length === 0 ? (
+                                                    <span>Ready</span>
+                                                ) : (
+                                                    <ul className="space-y-1">
+                                                        {row.messages.map((message, idx) => (
+                                                            <li key={`${row.id}-${idx}`}>• {message}</li>
+                                                        ))}
+                                                    </ul>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
